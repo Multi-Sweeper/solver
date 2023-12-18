@@ -1,6 +1,6 @@
 from __future__ import annotations
 import random
-from utils import colour_str
+from utils import coloured_num, unflaten_board
 from copy import deepcopy
 
 class Board:
@@ -138,32 +138,3 @@ class GameBoard:
 
     def __repr__(self):
         return self._solved_board.__repr__() + "\n\n" + self._board.__repr__()
-
-def coloured_num(str: str):
-    colours ={
-        "1": (0, 120, 255),
-        "2": (0, 255, 0),
-        "3": (255, 0, 0),
-        "4": (0, 0, 255),
-        "5": (150, 0, 0),
-        "6": (0, 130, 130),
-        "7": (100, 100, 100),
-        "8": (0, 0, 0),
-        "B": (0, 0, 0),
-        "F": (255, 50, 50)
-    }
-
-    if (str in colours):
-        return colour_str(str, colours[str])
-    
-    return str
-
-def unflaten_board(flat_board: list[int], width: int, height: int):
-    out = [[]]
-    for elem in flat_board:
-        if len(out[-1]) >= width:
-            out.append([])        
-        out[-1].append(elem)
-
-    assert len(out) == height, "error unflatening board"
-    return out
