@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Any
 import random
 from utils import coloured_num, unflaten_board
 from copy import deepcopy
@@ -9,14 +10,14 @@ class Board:
         self._height = height
         self._board = unflaten_board([0]*width*height, width, height)
 
-    def get_board(self):
+    def get_board(self) -> list[list]:
         return deepcopy(self._board)
     
     def update_board(self, board: list[list]):
         assert len(board) == self._height and len(board[0]) == self._width, "size mismatch"
         self._board = deepcopy(board)
 
-    def get_elem(self, x: int, y: int):
+    def get_elem(self, x: int, y: int) -> (Any | None):
         if x >= self._width or x < 0: return None
         if y >= self._height or y < 0: return None
 
@@ -28,9 +29,9 @@ class Board:
 
         self._board[self._height-1-y][x] = val
 
-    def adj_vals(self, x: int, y: int, val: list) -> int:
-        out = []
-        deltas = [(-1, 1), (0, 1), (1, 1), (-1, 0), (1, 0), (-1, -1), (0, -1), (1, -1)]
+    def adj_vals(self, x: int, y: int, val: list) -> list[tuple[int, int]]:
+        deltas: list[tuple[int, int]] = [(-1, 1), (0, 1), (1, 1), (-1, 0), (1, 0), (-1, -1), (0, -1), (1, -1)]
+        out: list[tuple[int, int]] = []
         for d in deltas:
             elem = self.get_elem(x+d[0], y+d[1])
             if elem in val:
@@ -38,10 +39,10 @@ class Board:
 
         return out
 
-    def adj_bombs(self, x: int, y: int) -> int:
+    def adj_bombs(self, x: int, y: int) -> list[tuple[int, int]]:
         return self.adj_vals(x, y, ["B"])
 
-    def adj_flags(self, x: int, y: int) -> int:
+    def adj_flags(self, x: int, y: int) -> list[tuple[int, int]]:
         return self.adj_vals(x, y, ["F"])
     
     def __repr__(self) -> str:
@@ -136,5 +137,5 @@ class GameBoard:
                 self.place_flags(x, y)
                 
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self._solved_board.__repr__() + "\n\n" + self._board.__repr__()
