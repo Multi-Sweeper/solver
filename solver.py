@@ -1,7 +1,9 @@
 from Board import GameBoard
 
-# easy board
-game_board = GameBoard(9, 9, 10)
+game_board = GameBoard(9, 9, 10) # easy board
+# game_board = GameBoard(16, 16, 40) # intermediate board
+# game_board = GameBoard(30, 16, 99) # advanced board
+
 print("= init =======================================")
 # hard code inital click location
 game_board.flood_fill(4,4)
