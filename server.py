@@ -1,7 +1,13 @@
 from flask import Flask, jsonify, request
 from Board import GameBoard
+from dotenv import load_dotenv
+import os
 
 app = Flask(__name__)
+load_dotenv()
+
+PORT = os.getenv('PORT')
+DEBUG = os.getenv('DEBUG')
 
 @app.route('/gen', methods=['POST'])
 def gen():
@@ -26,4 +32,4 @@ def gen():
     })
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=DEBUG, host='0.0.0.0', port=PORT)
