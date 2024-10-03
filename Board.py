@@ -70,6 +70,52 @@ class GameBoard:
         self.placed_flags = 0
         self.generate_boards(width, height, num_bombs)
 
+    @staticmethod
+    def generate_noguess_board(width, height, bombs):
+        attempts = 0
+        solved = False
+
+        while not solved:
+            attempts += 1
+            game_board = GameBoard(width, height, bombs)
+
+            initial_x = random.randint(0, width - 1)
+            initial_y = random.randint(0, height - 1)
+            initial_click = (initial_x, initial_y)
+
+            game_board.flood_fill(*initial_click)
+
+            previous_board = None
+            while True:
+                game_board.place_all_flags()
+                game_board.chord_all()
+
+                current_board = game_board._board.get_board()
+                if current_board == previous_board:
+                    break
+                previous_board = current_board
+
+            solved = game_board.is_solved()
+            if solved:
+                break
+
+        return game_board, (initial_x, initial_y), attempts, solved
+
+    def is_solved(self):
+        solved_board = self._solved_board.get_board()
+        player_board = self._board.get_board()
+        placed_flags = 0
+
+        for y in range(self._board._height):
+            for x in range(self._board._width):
+                solved_elem = solved_board[y][x]
+                player_elem = player_board[y][x]
+                if player_elem == "F":
+                    placed_flags += 1
+                    if solved_elem != "B":
+                        return False
+        return placed_flags == self.num_bombs
+
     def generate_boards(self, width: int, height: int, num_bombs: int):
         assert num_bombs <= width*height, "num_bombs must be less than or equal to width*height"
         bombs = [0]*width*height
