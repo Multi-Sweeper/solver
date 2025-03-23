@@ -62,6 +62,17 @@ class Board:
             out += f" {col} "
         return out
     
+    def __eq__(self, other: Board) -> bool:
+        if self._width != other._width or self._height != other._height:
+            return False
+        
+        for y in range(self._height):
+            for x in range(self._width):
+                if self.get_elem(x, y) != other.get_elem(x, y):
+                    return False
+                
+        return True
+    
 class GameBoard:
     def __init__(self, width: int, height: int, num_bombs: int):
         self._solved_board = Board(width, height)
@@ -69,37 +80,6 @@ class GameBoard:
         self.num_bombs = num_bombs
         self.placed_flags = 0
         self.generate_boards(width, height, num_bombs)
-
-    @staticmethod
-    def generate_noguess_board(width, height, bombs):
-        attempts = 0
-        solved = False
-
-        while not solved:
-            attempts += 1
-            game_board = GameBoard(width, height, bombs)
-
-            initial_x = random.randint(0, width - 1)
-            initial_y = random.randint(0, height - 1)
-            initial_click = (initial_x, initial_y)
-
-            game_board.flood_fill(*initial_click)
-
-            previous_board = None
-            while True:
-                game_board.place_all_flags()
-                game_board.chord_all()
-
-                current_board = game_board._board.get_board()
-                if current_board == previous_board:
-                    break
-                previous_board = current_board
-
-            solved = game_board.is_solved()
-            if solved:
-                break
-
-        return game_board, (initial_x, initial_y), attempts, solved
 
     def is_solved(self):
         solved_board = self._solved_board.get_board()
