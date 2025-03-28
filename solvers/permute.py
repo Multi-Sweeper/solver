@@ -40,8 +40,8 @@ def permute_solve_step(game_board: GameBoard) -> bool:
     end_pattern: int = (1 << len(potential_bombs))
     # print("end_pattern:", "{0:b}".format(end_pattern), f"({len(potential_bombs)})")
     
-    # if more than 17 potential bomb locations, do not even attempt
-    if len(potential_bombs) > 17:
+    # if more than 16 potential bomb locations, do not even attempt
+    if len(potential_bombs) > 16:
         print("too complex")
         return False
 
