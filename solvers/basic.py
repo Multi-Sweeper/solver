@@ -8,5 +8,4 @@ def basic_solve_step(game_board: GameBoard) -> bool:
     game_board.chord_all()
 
     post_board = deepcopy(game_board._board)
-
     return pre_board != post_board
