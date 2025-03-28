@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any
+from typing import Any, List, Dict
 import random
 from utils import coloured_num, unflaten_board
 from copy import deepcopy
@@ -9,6 +9,7 @@ class Board:
         self._width = width
         self._height = height
         self._board = unflaten_board([0]*width*height, width, height)
+        self.repr_override: Dict[(int, int), Any] = [] # {(x, y): Any}[]
 
     def get_board(self) -> list[list]:
         return deepcopy(self._board)
@@ -44,11 +45,25 @@ class Board:
 
     def adj_flags(self, x: int, y: int) -> list[tuple[int, int]]:
         return self.adj_vals(x, y, ["F"])
+
+    def adj_number(self, x: int, y: int) -> list[tuple[int, int]]:
+        return self.adj_vals(x, y, [1, 2, 3, 4, 5, 6, 7, 8])
+    
+    def cell_position_iter(self):
+        for y in reversed(range(self._height)):
+            for x in range(self._width):
+                yield (x, y)
     
     def __repr__(self) -> str:
         out = ""
         for row in range(len(self._board)):
-            for elem in self._board[row]:
+            for col in range(len(self._board[row])):
+                elem = self._board[row][col]
+                x, y = col, len(self._board)-row-1
+
+                if (x, y) in self.repr_override:
+                    elem = self.repr_override[(x, y)]
+
                 out += f" {coloured_num(str(elem))} "
             out += f" | {self._height-row-1}\n"
         
@@ -65,7 +80,7 @@ class Board:
                 out += f" {str(col).rjust(max_digits, '0')[digit]} "
             out += "\n"
 
-
+        self.repr_override = {}
         return out
     
     def __eq__(self, other: Board) -> bool:
