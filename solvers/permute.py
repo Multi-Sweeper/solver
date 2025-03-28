@@ -81,19 +81,3 @@ def permute_solve_step(game_board: GameBoard) -> bool:
 
     post_board = deepcopy(game_board._board)
     return pre_board != post_board
-
-
-"""
-00111001000
-01101000100
-01101001001
-01101010010
-10011011000
-11001010100
-11001011001
-
-flag_pattern:
-00001000000
-safe_pattern:
-11111011111
-"""
