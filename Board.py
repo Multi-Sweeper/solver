@@ -48,18 +48,24 @@ class Board:
     def __repr__(self) -> str:
         out = ""
         for row in range(len(self._board)):
-            out += f"{self._height-row-1}|"
             for elem in self._board[row]:
                 out += f" {coloured_num(str(elem))} "
-            out += "\n"
+            out += f" | {self._height-row-1}\n"
         
         out += " -"
         for _ in range(len(self._board[0])):
             out += "---"
          
-        out += "\n  "
-        for col in range(len(self._board[0])):
-            out += f" {col} "
+        out += "\n"
+
+        max_digits = len(str(len(self._board[0])))
+
+        for digit in range(max_digits):
+            for col in range(len(self._board[0])):
+                out += f" {str(col).rjust(max_digits, '0')[digit]} "
+            out += "\n"
+
+
         return out
     
     def __eq__(self, other: Board) -> bool:
