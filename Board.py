@@ -1,14 +1,16 @@
 from __future__ import annotations
-from typing import Any
+from typing import Any, Dict
 import random
 from utils import coloured_num, unflaten_board
 from copy import deepcopy
 
+NUM_ELEMS = [1,2,3,4,5,6,7,8]
 class Board:
     def __init__(self, width: int, height: int):
         self._width = width
         self._height = height
         self._board = unflaten_board([0]*width*height, width, height)
+        self.repr_override: Dict[(int, int), Any] = [] # {(x, y): Any}[]
 
     def get_board(self) -> list[list]:
         return deepcopy(self._board)
@@ -44,23 +46,65 @@ class Board:
 
     def adj_flags(self, x: int, y: int) -> list[tuple[int, int]]:
         return self.adj_vals(x, y, ["F"])
+
+    def adj_number(self, x: int, y: int) -> list[tuple[int, int]]:
+        return self.adj_vals(x, y, [1, 2, 3, 4, 5, 6, 7, 8])
+    
+    def cell_position_iter(self):
+        for y in reversed(range(self._height)):
+            for x in range(self._width):
+                yield (x, y)
+
+    def valid_flags(self):
+        for cell in self.cell_position_iter():
+            elem = self.get_elem(cell[0], cell[1])
+            if elem not in NUM_ELEMS:
+                continue
+
+            if len(self.adj_vals(cell[0], cell[1], ["F"])) != elem:
+                return False
+
+        return True
     
     def __repr__(self) -> str:
         out = ""
         for row in range(len(self._board)):
-            out += f"{self._height-row-1}|"
-            for elem in self._board[row]:
+            for col in range(len(self._board[row])):
+                elem = self._board[row][col]
+                x, y = col, len(self._board)-row-1
+
+                if (x, y) in self.repr_override:
+                    elem = self.repr_override[(x, y)]
+
                 out += f" {coloured_num(str(elem))} "
-            out += "\n"
+            out += f" | {self._height-row-1}\n"
         
         out += " -"
         for _ in range(len(self._board[0])):
             out += "---"
          
-        out += "\n  "
-        for col in range(len(self._board[0])):
-            out += f" {col} "
+        out += "\n"
+
+        max_digits = len(str(len(self._board[0])))
+
+        for digit in range(max_digits):
+            for col in range(len(self._board[0])):
+                out += f" {str(col).rjust(max_digits, '0')[digit]} "
+            out += "\n"
+
+        self.repr_override = {}
         return out
+    
+    def __eq__(self, other: Board) -> bool:
+        if self._width != other._width or self._height != other._height:
+            return False
+        
+        for y in range(self._height):
+            for x in range(self._width):
+                if self.get_elem(x, y) != other.get_elem(x, y):
+                    return False
+                
+        return True
     
 class GameBoard:
     def __init__(self, width: int, height: int, num_bombs: int):
@@ -69,37 +113,6 @@ class GameBoard:
         self.num_bombs = num_bombs
         self.placed_flags = 0
         self.generate_boards(width, height, num_bombs)
-
-    @staticmethod
-    def generate_noguess_board(width, height, bombs):
-        attempts = 0
-        solved = False
-
-        while not solved:
-            attempts += 1
-            game_board = GameBoard(width, height, bombs)
-
-            initial_x = random.randint(0, width - 1)
-            initial_y = random.randint(0, height - 1)
-            initial_click = (initial_x, initial_y)
-
-            game_board.flood_fill(*initial_click)
-
-            previous_board = None
-            while True:
-                game_board.place_all_flags()
-                game_board.chord_all()
-
-                current_board = game_board._board.get_board()
-                if current_board == previous_board:
-                    break
-                previous_board = current_board
-
-            solved = game_board.is_solved()
-            if solved:
-                break
-
-        return game_board, (initial_x, initial_y), attempts, solved
 
     def is_solved(self):
         solved_board = self._solved_board.get_board()
