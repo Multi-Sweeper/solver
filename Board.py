@@ -1,9 +1,10 @@
 from __future__ import annotations
-from typing import Any, List, Dict
+from typing import Any, Dict
 import random
 from utils import coloured_num, unflaten_board
 from copy import deepcopy
 
+NUM_ELEMS = [1,2,3,4,5,6,7,8]
 class Board:
     def __init__(self, width: int, height: int):
         self._width = width
@@ -53,6 +54,17 @@ class Board:
         for y in reversed(range(self._height)):
             for x in range(self._width):
                 yield (x, y)
+
+    def valid_flags(self):
+        for cell in self.cell_position_iter():
+            elem = self.get_elem(cell[0], cell[1])
+            if elem not in NUM_ELEMS:
+                continue
+
+            if len(self.adj_vals(cell[0], cell[1], ["F"])) != elem:
+                return False
+
+        return True
     
     def __repr__(self) -> str:
         out = ""

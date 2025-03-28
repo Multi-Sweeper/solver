@@ -32,13 +32,15 @@ start_solve_time = time.time()
 while True:
     print(f"= {i+1} =======================================")
     start_time_ms = math.floor(time.time() * 1000)
-    # progress = basic_solve_step(game_board)
-    progress = permute_solve_step(game_board)
+    progress = basic_solve_step(game_board)
+    if not progress:
+        progress = permute_solve_step(game_board)
+
     end_time_ms = math.floor(time.time() * 1000)
     time_delta_ms = end_time_ms - start_time_ms
     print(game_board)
 
-    print("progress:", progress, "|", "time taken:", f"{time_delta_ms}ms")
+    print("progress:", progress, "|", "time taken:", f"{time_delta_ms}ms\n")
     
     if (game_board.is_solved()):
         solved = True
@@ -47,8 +49,9 @@ while True:
     if not progress:
         break
     
-    input()
     i+=1
 
 if solved:
     print("Solved in:", f"{round(time.time() - start_solve_time, 2)}s")
+else:
+    print("Could not solve")
