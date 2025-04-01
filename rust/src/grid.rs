@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::utils::Coloured;
+use crate::colour::Coloured;
 
 #[derive(Debug)]
 pub struct Grid<T: Clone + Coloured> {

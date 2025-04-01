@@ -1,7 +1,7 @@
 use grid::Grid;
 
+mod colour;
 mod grid;
-mod utils;
 
 fn main() {
     let grid = Grid::new(16, 16, String::from("0"));
