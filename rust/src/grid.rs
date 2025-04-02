@@ -1,40 +1,75 @@
-use std::fmt::Display;
+use std::{fmt::Display, hash::Hash};
 
 use crate::colour::Coloured;
+use std::collections::HashSet;
 
-#[derive(Debug)]
-pub struct Grid<T: Clone + Coloured> {
+#[derive(Debug, Hash, PartialEq, Eq)]
+pub struct Grid<T: Clone + Coloured + Hash + Eq + PartialEq> {
     cells: Vec<Vec<T>>,
-    width: usize,
-    height: usize,
+    width: u8,
+    height: u8,
 }
 
-impl<T: Clone + Coloured> Grid<T> {
-    pub fn new(width: usize, height: usize, fill_cell: T) -> Self {
+impl<T: Clone + Coloured + Hash + Eq + PartialEq> Grid<T> {
+    pub fn new(width: u8, height: u8, fill_cell: T) -> Self {
         Grid {
-            cells: vec![vec![fill_cell; width]; height],
+            cells: vec![vec![fill_cell; width as usize]; height as usize],
             width,
             height,
         }
     }
 
-    pub fn get_cell(&self, x: usize, y: usize) -> Option<T> {
-        let row = self.cells.get(self.height - y - 1)?;
-        row.get(x).cloned()
+    pub fn get_cell(&self, x: i16, y: i16) -> Option<T> {
+        if x < 0 || x >= self.width as i16 {
+            return None;
+        } else if y < 0 || y >= self.height as i16 {
+            return None;
+        }
+
+        self.cells
+            .get(((self.height as i16) - y - 1) as usize)?
+            .get(x as usize)
+            .cloned()
     }
 
-    pub fn set_cell(&mut self, x: usize, y: usize, cell_value: T) {
-        self.cells[self.height - y - 1][x] = cell_value
+    pub fn set_cell(&mut self, x: u8, y: u8, cell_value: T) {
+        self.cells[(self.height - y - 1) as usize][x as usize] = cell_value
+    }
+
+    pub fn adj_cells(&self, x: u8, y: u8, filter_cells: HashSet<T>) -> Vec<(i8, i8)> {
+        let mut out = Vec::new();
+        let deltas: [(i8, i8); 8] = [
+            (-1, 1),
+            (0, 1),
+            (1, 1),
+            (-1, 0),
+            (1, 0),
+            (-1, -1),
+            (0, -1),
+            (1, -1),
+        ];
+
+        for d in deltas {
+            let elem = self.get_cell(x as i16 + d.0 as i16, y as i16 + d.1 as i16);
+
+            if let Some(e) = elem {
+                if filter_cells.contains(&e) {
+                    out.push(d);
+                }
+            }
+        }
+
+        out
     }
 }
 
-impl<T: Clone + Coloured> Display for Grid<T> {
+impl<T: Clone + Coloured + Hash + Eq + PartialEq> Display for Grid<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut out = String::new();
 
         for row in 0..self.height {
             for col in 0..self.width {
-                let elem = self.cells[row][col].clone();
+                let elem = self.cells[row as usize][col as usize].clone();
 
                 out.push_str(format!(" {} ", elem.to_coloured()).as_str());
             }
