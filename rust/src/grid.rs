@@ -55,7 +55,7 @@ impl<T: Clone + Coloured> Display for Grid<T> {
             for col in 0..self.width {
                 out.push(' ');
                 out.push_str(
-                    format!("{:0^width$}", col.to_string(), width = max_digits)
+                    format!("{:0width$}", col, width = max_digits)
                         .chars()
                         .nth(digit)
                         .unwrap()
