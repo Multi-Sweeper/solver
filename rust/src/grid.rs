@@ -19,6 +19,23 @@ impl<T: Clone + Coloured + Hash + Eq + PartialEq> Grid<T> {
         }
     }
 
+    pub fn from(cells: Vec<Vec<T>>, width: u8, height: u8) -> Result<Self, &'static str> {
+        if cells.len() != height as usize {
+            return Err("cells.len != height");
+        }
+        for row in &cells {
+            if row.len() != width as usize {
+                return Err("row != height");
+            }
+        }
+
+        Ok(Grid {
+            cells,
+            width,
+            height,
+        })
+    }
+
     pub fn get_cell(&self, x: i16, y: i16) -> Option<T> {
         if x < 0 || x >= self.width as i16 {
             return None;
