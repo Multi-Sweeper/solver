@@ -1,6 +1,6 @@
-use std::{fmt::Display, hash::Hash};
+use std::{fmt::Display, hash::Hash, vec};
 
-use crate::colour::Coloured;
+use crate::{Cell, colour::Coloured};
 use std::collections::HashSet;
 
 #[derive(Debug, Hash, PartialEq, Eq)]
@@ -60,6 +60,32 @@ impl<T: Clone + Coloured + Hash + Eq + PartialEq> Grid<T> {
         }
 
         out
+    }
+}
+
+impl Grid<Cell> {
+    pub fn adj_bombs(&self, x: u8, y: u8) -> Vec<(i8, i8)> {
+        let hash_set = HashSet::from([Cell::Bomb]);
+        self.adj_cells(x, y, hash_set)
+    }
+
+    pub fn adj_flags(&self, x: u8, y: u8) -> Vec<(i8, i8)> {
+        let hash_set = HashSet::from([Cell::Flag]);
+        self.adj_cells(x, y, hash_set)
+    }
+
+    pub fn adj_number(&self, x: u8, y: u8) -> Vec<(i8, i8)> {
+        let hash_set = HashSet::from([
+            Cell::Number(1),
+            Cell::Number(2),
+            Cell::Number(3),
+            Cell::Number(4),
+            Cell::Number(5),
+            Cell::Number(6),
+            Cell::Number(7),
+            Cell::Number(8),
+        ]);
+        self.adj_cells(x, y, hash_set)
     }
 }
 
