@@ -6,8 +6,8 @@ use std::collections::HashSet;
 #[derive(Debug, Hash, PartialEq, Eq)]
 pub struct Grid<T: Clone + Coloured + Hash + Eq + PartialEq> {
     cells: Vec<Vec<T>>,
-    width: u8,
-    height: u8,
+    pub width: u8,
+    pub height: u8,
 }
 
 impl<T: Clone + Coloured + Hash + Eq + PartialEq> Grid<T> {
@@ -37,9 +37,9 @@ impl<T: Clone + Coloured + Hash + Eq + PartialEq> Grid<T> {
     }
 
     pub fn get_cell(&self, x: i16, y: i16) -> Option<T> {
-        if x < 0 || x >= self.width as i16 {
+        if x < 0 || x >= self.width.into() {
             return None;
-        } else if y < 0 || y >= self.height as i16 {
+        } else if y < 0 || y >= self.height.into() {
             return None;
         }
 
@@ -49,8 +49,16 @@ impl<T: Clone + Coloured + Hash + Eq + PartialEq> Grid<T> {
             .cloned()
     }
 
-    pub fn set_cell(&mut self, x: u8, y: u8, cell_value: T) {
-        self.cells[(self.height - y - 1) as usize][x as usize] = cell_value
+    pub fn set_cell(&mut self, x: i16, y: i16, cell_value: T) -> Result<(), &'static str> {
+        if x < 0 || x >= self.width.into() {
+            return Err("x is out of bounds");
+        } else if y < 0 || y >= self.height.into() {
+            return Err("y is out of bounds");
+        }
+
+        self.cells[(self.height - (y as u8) - 1) as usize][x as usize] = cell_value;
+
+        Ok(())
     }
 
     pub fn adj_cells(&self, x: u8, y: u8, filter_cells: HashSet<T>) -> Vec<(i8, i8)> {

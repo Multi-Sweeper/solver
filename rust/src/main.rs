@@ -28,7 +28,14 @@ impl Coloured for Cell {
 }
 
 fn main() {
-    let board: GameBoard = GameBoard::new(16, 16, 40).unwrap();
+    // let mut board: GameBoard = GameBoard::new(9, 9, 10).unwrap();
+    // let mut board: GameBoard = GameBoard::new(16, 16, 40).unwrap();
+    // let mut board: GameBoard = GameBoard::new(30, 16, 99).unwrap();
+    let mut board: GameBoard = GameBoard::new(16, 16, 5).unwrap();
 
-    println!("{}", board)
+    board.flood_fill(0, 0);
+    println!("{}\n{}", board, board.is_solved());
+
+    board.place_all_flags();
+    println!("{}\n{}", board, board.is_solved());
 }
