@@ -3,11 +3,12 @@ use rand::seq::SliceRandom;
 use std::collections::HashSet;
 use std::fmt::Display;
 
+#[derive(Clone)]
 pub struct GameBoard {
-    width: u8,
-    height: u8,
-    solved_board: Grid<Cell>,
-    board: Grid<Cell>,
+    pub width: u8,
+    pub height: u8,
+    pub solved_board: Grid<Cell>,
+    pub board: Grid<Cell>,
     num_bombs: u16,
     placed_flags: u16,
 }
@@ -179,6 +180,122 @@ impl GameBoard {
                 self.place_flags(x, y);
             }
         }
+    }
+}
+
+impl GameBoard {
+    pub fn simple_solve_step(&mut self) -> bool {
+        let pre_board = self.board.clone();
+
+        self.place_all_flags();
+        self.chord_all();
+
+        pre_board != self.board
+    }
+
+    fn is_valid_bomb_pattern(&self, potential_bombs: &Vec<(u8, u8)>, pattern: u128) -> bool {
+        let mut board = self.board.clone();
+
+        let mut current_pattern = pattern;
+        let mut i = 0;
+
+        while current_pattern > 0 {
+            let is_bomb = (current_pattern & 0b1) == 1;
+
+            if is_bomb {
+                let cell = potential_bombs[i];
+                board
+                    .set_cell(cell.0.into(), cell.1.into(), Cell::Flag)
+                    .unwrap();
+            }
+
+            current_pattern >>= 1;
+            i += 1;
+        }
+
+        // println!("{}", board);
+        // println!("{} {:b}", board.valid_flags(), pattern);
+        // std::io::stdin().read_line(&mut String::new());
+
+        board.valid_flags()
+    }
+
+    pub fn permute_solve_step(&mut self) -> bool {
+        let pre_board = self.board.clone();
+
+        let mut potential_bombs: Vec<(u8, u8)> = Vec::new();
+        for y in 0..self.height {
+            for x in 0..self.width {
+                if let Some(Cell::Unknown) = self.board.get_cell(x.into(), y.into()) {
+                    if self.board.adj_number(x.into(), y.into()).len() > 0 {
+                        potential_bombs.push((x, y));
+                    }
+                }
+            }
+        }
+
+        if potential_bombs.len() > 127 {
+            println!("too many potential bombs");
+            return false;
+        }
+
+        println!("potential_bombs: {:?}", potential_bombs);
+
+        let mut valid_patterns: Vec<u128> = Vec::new();
+        let end_pattern: u128 = 1u128 << potential_bombs.len();
+
+        println!("end_pattern: {:b} ({})", end_pattern, potential_bombs.len());
+
+        // if more than 16 potential bomb locations, do not even attempt
+        if potential_bombs.len() > 16 {
+            println!("too complex");
+            return false;
+        }
+
+        for pattern in 1..end_pattern {
+            if self.is_valid_bomb_pattern(&potential_bombs, pattern) {
+                valid_patterns.push(pattern);
+            }
+        }
+
+        if valid_patterns.len() == 0 {
+            println!("no valid patterns");
+            return false;
+        }
+
+        let mut flag_pattern = end_pattern - 1;
+        let mut safe_pattern = 0u128;
+
+        for pattern in valid_patterns {
+            flag_pattern &= pattern;
+            safe_pattern |= pattern;
+        }
+
+        println!(
+            "flag_pattern: {:0width$b}\nsafe_pattern: {:0width$b}",
+            flag_pattern,
+            safe_pattern,
+            width = potential_bombs.len()
+        );
+
+        for i in 0..potential_bombs.len() {
+            let cell = potential_bombs[i];
+
+            if ((flag_pattern >> i) & 0b1) == 1 {
+                self.board
+                    .set_cell(cell.0.into(), cell.1.into(), Cell::Flag)
+                    .unwrap();
+            }
+
+            if ((safe_pattern >> i) & 0b1) == 0 {
+                self.flood_fill(cell.0.into(), cell.1.into());
+            }
+        }
+
+        // logical AND all valid patterns, if any digit is 1, it is guaranteed to be a bomb
+        // logical OR all valid patterns, if any digit is 0, it is guaranteed to be a safe
+
+        pre_board != self.board
     }
 }
 

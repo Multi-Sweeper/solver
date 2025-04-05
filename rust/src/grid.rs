@@ -3,14 +3,14 @@ use std::{fmt::Display, hash::Hash, vec};
 use crate::{Cell, colour::Coloured};
 use std::collections::HashSet;
 
-#[derive(Debug, Hash, PartialEq, Eq)]
-pub struct Grid<T: Clone + Coloured + Hash + Eq + PartialEq> {
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+pub struct Grid<T: Clone + Coloured + Hash + PartialEq + Eq> {
     cells: Vec<Vec<T>>,
     pub width: u8,
     pub height: u8,
 }
 
-impl<T: Clone + Coloured + Hash + Eq + PartialEq> Grid<T> {
+impl<T: Clone + Coloured + Hash + PartialEq + Eq> Grid<T> {
     pub fn new(width: u8, height: u8, fill_cell: T) -> Self {
         Grid {
             cells: vec![vec![fill_cell; width as usize]; height as usize],
@@ -112,9 +112,25 @@ impl Grid<Cell> {
         ]);
         self.adj_cells(x, y, hash_set)
     }
+
+    pub fn valid_flags(&self) -> bool {
+        for y in 0..self.height {
+            for x in 0..self.width {
+                match self.get_cell(x.into(), y.into()) {
+                    Some(Cell::Number(num)) => {
+                        if self.adj_cells(x, y, HashSet::from([Cell::Flag])).len() != num.into() {
+                            return false;
+                        }
+                    }
+                    _ => continue,
+                }
+            }
+        }
+        true
+    }
 }
 
-impl<T: Clone + Coloured + Hash + Eq + PartialEq> Display for Grid<T> {
+impl<T: Clone + Coloured + Hash + PartialEq + Eq> Display for Grid<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut out = String::new();
 
