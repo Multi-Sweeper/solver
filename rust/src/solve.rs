@@ -30,36 +30,7 @@ impl GameBoard {
             i += 1;
         }
 
-        // println!("{}", board);
-        // for cell in potential_bombs {
-        //     let adj_d = self.board.adj_number(cell.0.into(), cell.1.into());
-        //     for d in adj_d {
-        //         let x = cell.0 as i16 + d.0 as i16;
-        //         let y = cell.1 as i16 + d.1 as i16;
-        //         match self.board.get_cell(x, y) {
-        //             Some(Cell::Number(num)) => {
-        //                 let adj_flags =
-        //                     self.board
-        //                         .adj_cells(x as u8, y as u8, HashSet::from([Cell::Flag]));
-
-        //                 if adj_flags.len() != num.into() {
-        //                     println!("{} {:?}", num, adj_flags);
-
-        //                     println!("{} {:b}", false, pattern);
-        //                     // std::io::stdin().read_line(&mut String::new());
-        //                     return false;
-        //                 }
-        //             }
-        //             _ => continue,
-        //         }
-        //     }
-        // }
-
-        // println!("{} {:b}", board.valid_flags(), pattern);
         board.valid_flags()
-        // println!("{} {:b}", true, pattern);
-        // std::io::stdin().read_line(&mut String::new());
-        // true
     }
 
     pub fn permute_solve_step(&mut self) -> bool {

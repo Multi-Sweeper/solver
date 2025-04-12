@@ -52,8 +52,8 @@ fn main() {
 
     let start_solve_time = Instant::now();
     let mut step_summary: Option<Vec<Vec<&str>>> = None;
-    for starting_cell in starting_cells {
-        step_summary = strategy_simple(board.clone(), starting_cell);
+    for starting_cell in &starting_cells[0..1] {
+        step_summary = strategy_simple(board.clone(), starting_cell.to_owned());
     }
 
     if step_summary.is_some() {
