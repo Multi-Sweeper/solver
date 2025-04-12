@@ -139,3 +139,264 @@ impl GameBoard {
         pre_board != self.board
     }
 }
+
+#[cfg(test)]
+mod tests {
+
+    use std::time::Instant;
+
+    use crate::grid::Grid;
+
+    use super::*;
+
+    fn get_permute_1_grid(solved: bool) -> Grid<Cell> {
+        let cells: Vec<Vec<Cell>>;
+
+        if !solved {
+            cells = vec![
+                vec![
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                ],
+                vec![
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                ],
+                vec![
+                    Cell::Number(2),
+                    Cell::Number(2),
+                    Cell::Number(1),
+                    Cell::Number(1),
+                    Cell::Number(2),
+                    Cell::Number(2),
+                    Cell::Unknown,
+                    Cell::Unknown,
+                ],
+                vec![
+                    Cell::Flag,
+                    Cell::Number(1),
+                    Cell::Number(0),
+                    Cell::Number(0),
+                    Cell::Number(0),
+                    Cell::Number(1),
+                    Cell::Unknown,
+                    Cell::Unknown,
+                ],
+                vec![
+                    Cell::Number(1),
+                    Cell::Number(1),
+                    Cell::Number(0),
+                    Cell::Number(0),
+                    Cell::Number(0),
+                    Cell::Number(1),
+                    Cell::Unknown,
+                    Cell::Unknown,
+                ],
+                vec![
+                    Cell::Number(0),
+                    Cell::Number(0),
+                    Cell::Number(0),
+                    Cell::Number(0),
+                    Cell::Number(0),
+                    Cell::Number(2),
+                    Cell::Unknown,
+                    Cell::Unknown,
+                ],
+                vec![
+                    Cell::Number(0),
+                    Cell::Number(0),
+                    Cell::Number(0),
+                    Cell::Number(0),
+                    Cell::Number(0),
+                    Cell::Number(1),
+                    Cell::Unknown,
+                    Cell::Unknown,
+                ],
+                vec![
+                    Cell::Number(0),
+                    Cell::Number(0),
+                    Cell::Number(0),
+                    Cell::Number(0),
+                    Cell::Number(1),
+                    Cell::Number(2),
+                    Cell::Unknown,
+                    Cell::Unknown,
+                ],
+                vec![
+                    Cell::Number(0),
+                    Cell::Number(0),
+                    Cell::Number(1),
+                    Cell::Number(1),
+                    Cell::Number(2),
+                    Cell::Flag,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                ],
+                vec![
+                    Cell::Number(0),
+                    Cell::Number(0),
+                    Cell::Number(1),
+                    Cell::Flag,
+                    Cell::Number(2),
+                    Cell::Number(2),
+                    Cell::Unknown,
+                    Cell::Unknown,
+                ],
+                vec![
+                    Cell::Number(0),
+                    Cell::Number(0),
+                    Cell::Number(1),
+                    Cell::Number(1),
+                    Cell::Number(1),
+                    Cell::Number(1),
+                    Cell::Unknown,
+                    Cell::Unknown,
+                ],
+            ];
+        } else {
+            cells = vec![
+                vec![
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                ],
+                vec![
+                    Cell::Unknown,
+                    Cell::Bomb,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Bomb,
+                    Cell::Bomb,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                ],
+                vec![
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                ],
+                vec![
+                    Cell::Bomb,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                ],
+                vec![
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Bomb,
+                    Cell::Unknown,
+                ],
+                vec![
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                ],
+                vec![
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Bomb,
+                    Cell::Unknown,
+                ],
+                vec![
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                ],
+                vec![
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Bomb,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                ],
+                vec![
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Bomb,
+                    Cell::Unknown,
+                ],
+                vec![
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                    Cell::Unknown,
+                ],
+            ];
+        }
+
+        Grid::from(cells, 8, 11).unwrap()
+    }
+
+    #[test]
+    #[ignore]
+    fn permute_1() {
+        let grid = get_permute_1_grid(false);
+        let solved_grid = get_permute_1_grid(true);
+
+        let mut board = GameBoard::from(solved_grid).unwrap();
+        board.board = grid;
+
+        println!("{}", board);
+        let start_time = Instant::now();
+        board.permute_solve_step();
+        println!("{}\ntime: {}ms", board, start_time.elapsed().as_millis());
+
+        assert!(false);
+    }
+}
