@@ -1,10 +1,12 @@
 use board::GameBoard;
 use colour::Coloured;
-use std::{io, time::Instant, vec};
+use std::time::Instant;
+use strategy::strategy_simple;
 
 mod board;
 mod colour;
 mod grid;
+mod strategy;
 mod utils;
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
@@ -47,51 +49,13 @@ fn main() {
         }
     }
 
-    let mut solved = false;
     let start_solve_time = Instant::now();
-    let mut step_summary: Vec<Vec<&str>> = Vec::new();
-
+    let mut step_summary: Option<Vec<Vec<&str>>> = None;
     for starting_cell in starting_cells {
-        let mut game_board = board.clone();
-        game_board.flood_fill(starting_cell.0.into(), starting_cell.1.into());
-
-        println!("= init =======================================");
-        println!("{}", game_board);
-
-        step_summary.clear();
-        let mut i = 0;
-        solved = false;
-        let mut progress = true;
-
-        while !solved && progress {
-            println!("= {} =======================================", i + 1);
-            let start_time = Instant::now();
-            step_summary.push(vec!["basic"]);
-            progress = game_board.simple_solve_step();
-            if !progress {
-                step_summary.last_mut().unwrap().push("permute");
-                progress = game_board.permute_solve_step();
-            }
-
-            println!("{}", game_board);
-            println!(
-                "progress: {} |  time taken: {}ms",
-                progress,
-                start_time.elapsed().as_millis()
-            );
-
-            solved = game_board.is_solved();
-            i += 1;
-
-            // std::io::stdin().read_line(&mut String::new());
-        }
-
-        if solved {
-            break;
-        }
+        step_summary = strategy_simple(board.clone(), starting_cell);
     }
 
-    if solved {
+    if step_summary.is_some() {
         println!("Solved in: {}ms", start_solve_time.elapsed().as_millis());
         println!("step summary: {:?}", step_summary);
     } else {
