@@ -228,9 +228,9 @@ impl GameBoard {
         let mut potential_bombs: Vec<(u8, u8)> = Vec::new();
         for cell in self.board.get_iter() {
             let (x, y) = cell.pos;
-                if let Some(Cell::Unknown) = self.board.get_cell(x.into(), y.into()) {
-                    if self.board.adj_number(x.into(), y.into()).len() > 0 {
-                        potential_bombs.push((x, y));
+            if let Some(Cell::Unknown) = self.board.get_cell(x.into(), y.into()) {
+                if self.board.adj_number(x.into(), y.into()).len() > 0 {
+                    potential_bombs.push((x, y));
                 }
             }
         }
