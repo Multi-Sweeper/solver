@@ -29,21 +29,20 @@ impl Coloured for Cell {
 }
 
 fn main() {
-    // let mut board: GameBoard = GameBoard::new(9, 9, 10).unwrap();
-    let mut board: GameBoard = GameBoard::new(16, 16, 40).unwrap();
-    // let mut board: GameBoard = GameBoard::new(30, 16, 99).unwrap();
-    // let mut board: GameBoard = GameBoard::new(16, 16, 10).unwrap();
+    // let board: GameBoard = GameBoard::new(9, 9, 10).unwrap();
+    let board: GameBoard = GameBoard::new(16, 16, 40).unwrap();
+    // let board: GameBoard = GameBoard::new(30, 16, 99).unwrap();
+    // let board: GameBoard = GameBoard::new(16, 16, 10).unwrap();
 
     // determine all possible starting cells
     let mut starting_cells: Vec<(u8, u8)> = Vec::new();
     let mut temp_board = board.clone();
-    for y in 0..temp_board.height {
-        for x in 0..temp_board.width {
-            if let Some(Cell::Number(0)) = temp_board.solved_board.get_cell(x.into(), y.into()) {
-                if let Some(Cell::Unknown) = temp_board.board.get_cell(x.into(), y.into()) {
-                    temp_board.flood_fill(x.into(), y.into());
-                    starting_cells.push((x, y));
-                }
+    for cell in temp_board.solved_board.get_iter() {
+        let (x, y) = cell.pos;
+        if cell.val == Cell::Number(0) {
+            if temp_board.board.get_cell(x.into(), y.into()) == Some(Cell::Unknown) {
+                temp_board.flood_fill(x.into(), y.into());
+                starting_cells.push((x, y));
             }
         }
     }

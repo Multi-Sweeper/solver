@@ -62,28 +62,26 @@ impl GameBoard {
     }
 
     pub fn is_solved(&self) -> bool {
-        for _y in 0..self.height {
-            let y = (self.height - _y - 1) as i16;
-            for x in 0..self.width {
-                let solved_elem = self.solved_board.get_cell(x as i16, y).unwrap();
-                let player_elem = self.board.get_cell(x as i16, y).unwrap();
+        for cell in self.solved_board.get_iter() {
+            let (x, y) = cell.pos;
 
-                if let Cell::Number(_) = solved_elem {
-                    if solved_elem == player_elem {
-                        continue;
-                    } else {
-                        return false;
-                    }
-                } else if solved_elem == Cell::Bomb {
-                    if player_elem == Cell::Unknown || player_elem == Cell::Flag {
-                        continue;
-                    } else {
-                        return false;
-                    }
+            let solved_elem = cell.val;
+            let player_elem = self.board.get_cell(x as i16, y as i16).unwrap();
+
+            if let Cell::Number(_) = solved_elem {
+                if solved_elem == player_elem {
+                    continue;
+                } else {
+                    return false;
+                }
+            } else if solved_elem == Cell::Bomb {
+                if player_elem == Cell::Unknown || player_elem == Cell::Flag {
+                    continue;
+                } else {
+                    return false;
                 }
             }
         }
-
         true
     }
 
@@ -180,10 +178,9 @@ impl GameBoard {
     }
 
     pub fn place_all_flags(&mut self) {
-        for y in 0..self.height {
-            for x in 0..self.width {
+        for cell in self.board.get_iter() {
+            let (x, y) = cell.pos;
                 self.place_flags(x, y);
-            }
         }
     }
 }
@@ -229,12 +226,11 @@ impl GameBoard {
         let pre_board = self.board.clone();
 
         let mut potential_bombs: Vec<(u8, u8)> = Vec::new();
-        for y in 0..self.height {
-            for x in 0..self.width {
+        for cell in self.board.get_iter() {
+            let (x, y) = cell.pos;
                 if let Some(Cell::Unknown) = self.board.get_cell(x.into(), y.into()) {
                     if self.board.adj_number(x.into(), y.into()).len() > 0 {
                         potential_bombs.push((x, y));
-                    }
                 }
             }
         }

@@ -127,19 +127,15 @@ impl Grid<Cell> {
     }
 
     pub fn valid_flags(&self) -> bool {
-        for y in 0..self.height {
-            for x in 0..self.width {
-                match self.get_cell(x.into(), y.into()) {
-                    Some(Cell::Number(num)) => {
-                        if self
-                            .adj_cells(x, y, Some(HashSet::from([Cell::Flag])))
-                            .len()
-                            != num.into()
-                        {
-                            return false;
-                        }
-                    }
-                    _ => continue,
+        for cell in self.get_iter() {
+            let (x, y) = cell.pos;
+            if let Cell::Number(num) = cell.val {
+                if self
+                    .adj_cells(x, y, Some(HashSet::from([Cell::Flag])))
+                    .len()
+                    != num.into()
+                {
+                    return false;
                 }
             }
         }
