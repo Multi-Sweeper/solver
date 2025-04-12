@@ -61,7 +61,7 @@ impl<T: Clone + Coloured + Hash + PartialEq + Eq> Grid<T> {
         Ok(())
     }
 
-    pub fn to_iter(&self) -> CellsIter<T> {
+    pub fn get_iter(&self) -> CellsIter<T> {
         CellsIter {
             curr_pos: (0, 0),
             width: self.width,
@@ -267,7 +267,7 @@ mod tests {
     fn cells_iter_1() {
         let grid = generate_grid();
 
-        let out: Vec<_> = grid.to_iter().collect();
+        let out: Vec<_> = grid.get_iter().collect();
 
         assert_eq!(
             out,

@@ -39,7 +39,7 @@ impl GameBoard {
         )?;
 
         // populate grid cell with correct Cell::NUmber
-        for cell in solved_board.to_iter() {
+        for cell in solved_board.get_iter() {
             let (x, y) = cell.pos;
 
             if cell.val != Cell::Bomb {
