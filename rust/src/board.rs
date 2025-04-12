@@ -32,12 +32,16 @@ impl GameBoard {
         solved_board.shuffle(&mut rng);
 
         // unflatten vec into grid
-        let mut solved_board = Grid::from(
+        let solved_board = Grid::from(
             unflatten(solved_board, width, height).unwrap(),
             width,
             height,
         )?;
 
+        GameBoard::from(solved_board)
+    }
+
+    pub fn from(mut solved_board: Grid<Cell>) -> Result<Self, &'static str> {
         // populate grid cell with correct Cell::NUmber
         for cell in solved_board.get_iter() {
             let (x, y) = cell.pos;
@@ -50,6 +54,14 @@ impl GameBoard {
                 )?;
             }
         }
+
+        let num_bombs = solved_board
+            .get_iter()
+            .filter(|cell| cell.val == Cell::Bomb)
+            .count() as u16;
+
+        let width = solved_board.width;
+        let height = solved_board.height;
 
         Ok(GameBoard {
             width,
