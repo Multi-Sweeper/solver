@@ -6,6 +6,7 @@ use strategy::strategy_simple;
 mod board;
 mod colour;
 mod grid;
+mod solve;
 mod strategy;
 mod utils;
 
