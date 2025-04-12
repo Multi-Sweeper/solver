@@ -21,28 +21,33 @@ impl GameBoard {
             "num_bombs must be less than or equal to width*height"
         );
 
+        // create vec with n Cell::Bomb's with Cell::Number(0) right padded to fill up the desired board size
         let mut solved_board: Vec<Cell> = vec![Cell::Bomb; num_bombs as usize];
         for _ in 0..(num_cells - num_bombs) {
             solved_board.push(Cell::Number(0));
         }
 
+        // randomize cell positions
         let mut rng = rand::rng();
         solved_board.shuffle(&mut rng);
 
-        let mut solved_board = Grid::from(unflatten(solved_board, width, height), width, height)?;
+        // unflatten vec into grid
+        let mut solved_board = Grid::from(
+            unflatten(solved_board, width, height).unwrap(),
+            width,
+            height,
+        )?;
 
-        // solve board
-        for x in 0..width {
-            for y in 0..height {
-                if let Some(cell) = solved_board.get_cell(x.into(), y.into()) {
-                    if cell != Cell::Bomb {
-                        solved_board.set_cell(
-                            x.into(),
-                            y.into(),
-                            Cell::Number(solved_board.adj_bombs(x, y).len() as u8),
-                        )?;
-                    }
-                }
+        // populate grid cell with correct Cell::NUmber
+        for cell in solved_board.to_iter() {
+            let (x, y) = cell.pos;
+
+            if cell.val != Cell::Bomb {
+                solved_board.set_cell(
+                    x.into(),
+                    y.into(),
+                    Cell::Number(solved_board.adj_bombs(x, y).len() as u8),
+                )?;
             }
         }
 
@@ -163,11 +168,11 @@ impl GameBoard {
         if let Some(Cell::Number(num)) = self.board.get_cell(x.into(), y.into()) {
             let adj = self
                 .board
-                .adj_cells(x, y, HashSet::from([Cell::Unknown, Cell::Flag]));
+                .adj_cells(x, y, Some(HashSet::from([Cell::Unknown, Cell::Flag])));
             if adj.len() == num as usize {
                 for d in adj {
                     self.board
-                        .set_cell(x as i16 + d.0 as i16, y as i16 + d.1 as i16, Cell::Flag)
+                        .set_cell(d.0.into(), d.1.into(), Cell::Flag)
                         .unwrap();
                 }
             }
