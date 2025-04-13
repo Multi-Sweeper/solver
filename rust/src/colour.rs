@@ -1,7 +1,6 @@
 use nu_ansi_term::{Color, Style};
 
 pub fn colour_str(str: &str, rgb: (u8, u8, u8), background: Option<(u8, u8, u8)>) -> String {
-    // Rgb(rgb.0, rgb.1, rgb.2).paint(str).to_string()
     let mut style = Style::new();
     style.foreground = Some(Color::Rgb(rgb.0, rgb.1, rgb.2));
     if let Some((r, g, b)) = background {
@@ -9,19 +8,6 @@ pub fn colour_str(str: &str, rgb: (u8, u8, u8), background: Option<(u8, u8, u8)>
     }
 
     style.paint(str).to_string()
-
-    // let builder = AnsiBuilder::new()
-    //     .color()
-    //     .fg()
-    //     .rgb(rgb.0, rgb.1, rgb.2)
-    //     .text(str);
-
-    // builder.0;
-
-    // format!(
-    //     "\u{001B}[38;2;{};{};{}m{str}\u{001B}[0m",
-    //     rgb.0, rgb.1, rgb.2
-    // )
 }
 
 pub trait Coloured {
