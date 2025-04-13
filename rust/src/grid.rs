@@ -100,6 +100,27 @@ impl<T: Clone + Coloured + Hash + PartialEq + Eq> Grid<T> {
         out
     }
 
+    pub fn diff(&self, other: &Self) -> Result<Vec<(u8, u8)>, String> {
+        let mut out = Vec::new();
+
+        if self.width != other.width {
+            return Err("self.width != other.width".to_string());
+        } else if self.height != other.height {
+            return Err("height != other.height".to_string());
+        }
+
+        for cell in self.get_iter() {
+            let (x, y) = cell.pos;
+            let other_cell = other.get_cell(x.into(), y.into()).unwrap();
+
+            if cell.val != other_cell {
+                out.push(cell.pos);
+            }
+        }
+
+        Ok(out)
+    }
+
     pub fn to_string(&self, highlights: Option<HashMap<(u8, u8), (u8, u8, u8)>>) -> String {
         let mut out = String::new();
 

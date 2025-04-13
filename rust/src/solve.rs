@@ -113,6 +113,8 @@ impl GameBoard {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use super::*;
 
     fn get_solved_str() -> &'static str {
@@ -184,12 +186,23 @@ mod tests {
         let mut pre_board = GameBoard::from_str(solved, pre).unwrap();
         let post_board = GameBoard::from_str(solved, post).unwrap();
 
-        println!("{}\n=========\n\n{}", pre_board, post_board);
-
         pre_board.permute_solve_step();
 
-        println!("left:\n{}\nright:\n{}", pre_board.board, post_board.board);
+        let diff = pre_board.board.diff(&post_board.board).unwrap();
+        let mut diff_map = HashMap::new();
+        for pos in diff {
+            diff_map.insert(pos, (100, 100, 0));
+        }
 
-        assert_eq!(pre_board.board, post_board.board)
+        println!(
+            "\nsolved:\n{}left:\n{}\nright:\n{}",
+            pre_board.solved_board,
+            pre_board.board,
+            post_board.board.to_string(Some(diff_map))
+        );
+
+        if pre_board.board != post_board.board {
+            assert!(false);
+        }
     }
 }
