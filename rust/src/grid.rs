@@ -1,4 +1,4 @@
-use std::{fmt::Display, hash::Hash, vec};
+use std::{collections::HashMap, fmt::Display, hash::Hash, vec};
 
 use crate::{Cell, colour::Coloured, utils::unflatten};
 use std::collections::HashSet;
@@ -99,6 +99,52 @@ impl<T: Clone + Coloured + Hash + PartialEq + Eq> Grid<T> {
 
         out
     }
+
+    pub fn to_string(&self, highlights: Option<HashMap<(u8, u8), (u8, u8, u8)>>) -> String {
+        let mut out = String::new();
+
+        for row in 0..self.height {
+            for col in 0..self.width {
+                let elem = self.cells[row as usize][col as usize].clone();
+
+                let mut bg: Option<(u8, u8, u8)> = None;
+                if let Some(ref map) = highlights {
+                    bg = map.get(&(col, self.height - row - 1)).copied();
+                }
+
+                out.push_str(format!(" {} ", elem.to_coloured(bg)).as_str());
+            }
+
+            out.push_str(format!(" | {}\n", self.height - row - 1).as_str());
+        }
+
+        out.push_str(" -");
+
+        for _ in 0..self.width {
+            out.push_str("---");
+        }
+
+        out.push('\n');
+
+        let max_digits = self.width.to_string().len();
+        for digit in 0..max_digits {
+            for col in 0..self.width {
+                out.push(' ');
+                out.push_str(
+                    format!("{:0width$}", col, width = max_digits)
+                        .chars()
+                        .nth(digit)
+                        .unwrap()
+                        .to_string()
+                        .as_str(),
+                );
+                out.push(' ');
+            }
+            out.push('\n');
+        }
+
+        out
+    }
 }
 
 impl Grid<Cell> {
@@ -189,44 +235,7 @@ impl Grid<Cell> {
 
 impl<T: Clone + Coloured + Hash + PartialEq + Eq> Display for Grid<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut out = String::new();
-
-        for row in 0..self.height {
-            for col in 0..self.width {
-                let elem = self.cells[row as usize][col as usize].clone();
-
-                out.push_str(format!(" {} ", elem.to_coloured()).as_str());
-            }
-
-            out.push_str(format!(" | {}\n", self.height - row - 1).as_str());
-        }
-
-        out.push_str(" -");
-
-        for _ in 0..self.width {
-            out.push_str("---");
-        }
-
-        out.push('\n');
-
-        let max_digits = self.width.to_string().len();
-        for digit in 0..max_digits {
-            for col in 0..self.width {
-                out.push(' ');
-                out.push_str(
-                    format!("{:0width$}", col, width = max_digits)
-                        .chars()
-                        .nth(digit)
-                        .unwrap()
-                        .to_string()
-                        .as_str(),
-                );
-                out.push(' ');
-            }
-            out.push('\n');
-        }
-
-        f.write_str(out.as_str())
+        f.write_str(self.to_string(None).as_str())
     }
 }
 

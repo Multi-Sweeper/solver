@@ -23,13 +23,13 @@ enum Cell {
 }
 
 impl Coloured for Cell {
-    fn to_coloured(&self) -> String {
+    fn to_coloured(&self, background: Option<(u8, u8, u8)>) -> String {
         match self {
-            Cell::Number(num) => num.to_string().to_coloured(),
-            Cell::Bomb => String::from("B").to_coloured(),
-            Cell::Flag => String::from("F").to_coloured(),
-            Cell::Unknown => String::from("?").to_coloured(),
-            Cell::Asterix => String::from("*").to_coloured(),
+            Cell::Number(num) => num.to_string().to_coloured(background),
+            Cell::Bomb => String::from("B").to_coloured(background),
+            Cell::Flag => String::from("F").to_coloured(background),
+            Cell::Unknown => String::from("?").to_coloured(background),
+            Cell::Asterix => String::from("*").to_coloured(background),
         }
     }
 }
