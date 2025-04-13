@@ -41,21 +41,34 @@ fn main() {
     // let board: GameBoard = GameBoard::new(16, 16, 10).unwrap();
 
     // determine all possible starting cells
-    let mut starting_cells: Vec<(u8, u8)> = Vec::new();
+    let mut starting_cells: Vec<(usize, (u8, u8))> = Vec::new();
     let mut temp_board = board.clone();
     for cell in temp_board.solved_grid.get_iter() {
         let (x, y) = cell.pos;
         if cell.val == Cell::Number(0) {
             if temp_board.grid.get_cell(x.into(), y.into()) == Some(Cell::Unknown) {
+                let pre_zeros = temp_board
+                    .grid
+                    .get_iter()
+                    .filter(|cell| cell.val == Cell::Number(0))
+                    .count();
                 temp_board.flood_fill(x.into(), y.into());
-                starting_cells.push((x, y));
+                let post_zeros = temp_board
+                    .grid
+                    .get_iter()
+                    .filter(|cell| cell.val == Cell::Number(0))
+                    .count();
+                starting_cells.push((post_zeros - pre_zeros, (x, y)));
             }
         }
     }
 
+    starting_cells.sort_by(|a, b| b.0.cmp(&a.0));
+    let starting_cells_sorted: Vec<(u8, u8)> = starting_cells.iter().map(|x| x.1).collect();
+
     let start_solve_time = Instant::now();
     let mut step_summary: Option<Vec<Vec<&str>>> = None;
-    for starting_cell in &starting_cells[0..1] {
+    for starting_cell in &starting_cells_sorted[0..1] {
         step_summary = strategy_simple(board.clone(), starting_cell.to_owned());
     }
 
