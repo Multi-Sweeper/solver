@@ -177,6 +177,7 @@ mod tests {
     #[test]
     #[ignore]
     fn permute_1() {
+        // this takes ~70s for me
         time_test!();
 
         let pre = get_pre_str();
