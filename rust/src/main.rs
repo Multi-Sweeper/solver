@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate time_test;
+
 use board::GameBoard;
 use colour::Coloured;
 use std::time::Instant;

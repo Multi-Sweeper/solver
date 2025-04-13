@@ -1,6 +1,6 @@
 use std::{fmt::Display, hash::Hash, vec};
 
-use crate::{Cell, colour::Coloured};
+use crate::{Cell, colour::Coloured, utils::unflatten};
 use std::collections::HashSet;
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
@@ -102,6 +102,50 @@ impl<T: Clone + Coloured + Hash + PartialEq + Eq> Grid<T> {
 }
 
 impl Grid<Cell> {
+    pub fn from_str(input_str: &str) -> Result<Self, String> {
+        let height = input_str.split("\n").count();
+        let width = input_str.split("\n").collect::<Vec<_>>()[0]
+            .trim()
+            .split(" ")
+            .filter(|c| !c.is_empty())
+            .count();
+
+        if height > 255 {
+            return Err("height > 255".to_string());
+        } else if width > 255 {
+            return Err("width > 255".to_string());
+        }
+
+        let height = height as u8;
+        let width = width as u8;
+
+        let mut flat_cells: Vec<Cell> = Vec::new();
+
+        for row in input_str.split("\n") {
+            for cell in row.trim().split(" ").filter(|c| !c.is_empty()) {
+                flat_cells.push(match cell {
+                    "0" => Cell::Number(0),
+                    "1" => Cell::Number(1),
+                    "2" => Cell::Number(2),
+                    "3" => Cell::Number(3),
+                    "4" => Cell::Number(4),
+                    "5" => Cell::Number(5),
+                    "6" => Cell::Number(6),
+                    "7" => Cell::Number(7),
+                    "8" => Cell::Number(8),
+                    "B" => Cell::Bomb,
+                    "F" => Cell::Flag,
+                    "?" => Cell::Unknown,
+                    "*" => Cell::Asterix,
+                    _ => return Err(format!("unknown character: `{}`", cell)),
+                });
+            }
+        }
+
+        let cells = unflatten(flat_cells, width, height)?;
+        Ok(Grid::from(cells, width, height)?)
+    }
+
     pub fn adj_bombs(&self, x: u8, y: u8) -> Vec<(u8, u8)> {
         let hash_set = HashSet::from([Cell::Bomb]);
         self.adj_cells(x, y, Some(hash_set))
@@ -346,6 +390,23 @@ mod tests {
 
         let from_grid = Grid::from(cells, 2, 2);
         assert!(from_grid.is_err());
+    }
+
+    #[test]
+    fn from_str_1() {
+        let cells = generate_cells();
+        let grid = Grid::from(cells, 3, 3).unwrap();
+
+        let grid_from_str = Grid::from_str(
+            "?  ?  F
+?  B  ?
+0  ?  5",
+        )
+        .unwrap();
+
+        println!("{} {}", grid, grid_from_str);
+
+        assert_eq!(grid, grid_from_str)
     }
 
     #[test]

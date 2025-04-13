@@ -73,6 +73,36 @@ impl GameBoard {
         })
     }
 
+    pub fn from_str(solved_grid_str: &str, player_grid_str: &str) -> Result<Self, String> {
+        let solved_grid = Grid::from_str(solved_grid_str)?;
+        let player_grid = Grid::from_str(player_grid_str)?;
+
+        if solved_grid.width != player_grid.width {
+            return Err("solved_grid.width != player_grid.width".to_string());
+        } else if solved_grid.height != player_grid.height {
+            return Err("solved_grid.height != player_grid.height".to_string());
+        }
+
+        let num_bombs = solved_grid
+            .get_iter()
+            .filter(|c| c.val == Cell::Bomb)
+            .count() as u16;
+
+        let placed_flags = player_grid
+            .get_iter()
+            .filter(|c| c.val == Cell::Flag)
+            .count() as u16;
+
+        Ok(GameBoard {
+            width: solved_grid.width,
+            height: solved_grid.height,
+            solved_board: solved_grid,
+            board: player_grid,
+            num_bombs,
+            placed_flags,
+        })
+    }
+
     pub fn is_solved(&self) -> bool {
         for cell in self.solved_board.get_iter() {
             let (x, y) = cell.pos;

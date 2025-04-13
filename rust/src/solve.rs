@@ -113,261 +113,81 @@ impl GameBoard {
 
 #[cfg(test)]
 mod tests {
-
-    use std::time::Instant;
-
-    use crate::grid::Grid;
-
     use super::*;
 
-    fn get_permute_1_grid(solved: bool) -> Grid<Cell> {
-        let cells: Vec<Vec<Cell>>;
+    fn get_solved_str() -> &'static str {
+        "B  1  1  B  3  B  3  2  4  B  B  1  1  B  2  1 
+        2  2  1  1  3  B  3  B  B  B  3  2  2  3  B  1 
+        B  1  0  0  1  1  2  3  B  3  1  1  B  2  2  2 
+        1  1  0  1  1  1  0  2  2  3  1  2  1  1  1  B 
+        0  0  0  1  B  3  2  2  B  2  B  1  0  0  1  1 
+        0  0  0  1  2  B  B  2  1  2  1  1  1  1  1  0 
+        1  2  1  1  1  2  2  1  0  1  1  1  1  B  2  1 
+        B  2  B  2  2  2  1  0  0  1  B  1  1  1  2  B 
+        1  2  1  2  B  B  1  0  0  1  1  1  0  0  1  1 
+        0  0  0  1  2  2  1  0  0  0  1  1  1  0  0  0 
+        0  0  0  0  0  0  0  1  1  1  1  B  2  1  1  0 
+        1  1  1  0  1  1  2  2  B  2  2  1  3  B  2  0 
+        1  B  1  1  2  B  3  B  3  B  1  0  2  B  2  0 
+        1  1  1  1  B  4  B  2  2  1  1  1  2  2  1  0 
+        0  0  0  1  2  B  2  1  0  0  0  1  B  1  1  1 
+        0  0  0  0  1  1  1  0  0  0  0  1  1  1  1  B"
+    }
 
-        if !solved {
-            cells = vec![
-                vec![
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                ],
-                vec![
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                ],
-                vec![
-                    Cell::Number(2),
-                    Cell::Number(2),
-                    Cell::Number(1),
-                    Cell::Number(1),
-                    Cell::Number(2),
-                    Cell::Number(2),
-                    Cell::Unknown,
-                    Cell::Unknown,
-                ],
-                vec![
-                    Cell::Flag,
-                    Cell::Number(1),
-                    Cell::Number(0),
-                    Cell::Number(0),
-                    Cell::Number(0),
-                    Cell::Number(1),
-                    Cell::Unknown,
-                    Cell::Unknown,
-                ],
-                vec![
-                    Cell::Number(1),
-                    Cell::Number(1),
-                    Cell::Number(0),
-                    Cell::Number(0),
-                    Cell::Number(0),
-                    Cell::Number(1),
-                    Cell::Unknown,
-                    Cell::Unknown,
-                ],
-                vec![
-                    Cell::Number(0),
-                    Cell::Number(0),
-                    Cell::Number(0),
-                    Cell::Number(0),
-                    Cell::Number(0),
-                    Cell::Number(2),
-                    Cell::Unknown,
-                    Cell::Unknown,
-                ],
-                vec![
-                    Cell::Number(0),
-                    Cell::Number(0),
-                    Cell::Number(0),
-                    Cell::Number(0),
-                    Cell::Number(0),
-                    Cell::Number(1),
-                    Cell::Unknown,
-                    Cell::Unknown,
-                ],
-                vec![
-                    Cell::Number(0),
-                    Cell::Number(0),
-                    Cell::Number(0),
-                    Cell::Number(0),
-                    Cell::Number(1),
-                    Cell::Number(2),
-                    Cell::Unknown,
-                    Cell::Unknown,
-                ],
-                vec![
-                    Cell::Number(0),
-                    Cell::Number(0),
-                    Cell::Number(1),
-                    Cell::Number(1),
-                    Cell::Number(2),
-                    Cell::Flag,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                ],
-                vec![
-                    Cell::Number(0),
-                    Cell::Number(0),
-                    Cell::Number(1),
-                    Cell::Flag,
-                    Cell::Number(2),
-                    Cell::Number(2),
-                    Cell::Unknown,
-                    Cell::Unknown,
-                ],
-                vec![
-                    Cell::Number(0),
-                    Cell::Number(0),
-                    Cell::Number(1),
-                    Cell::Number(1),
-                    Cell::Number(1),
-                    Cell::Number(1),
-                    Cell::Unknown,
-                    Cell::Unknown,
-                ],
-            ];
-        } else {
-            cells = vec![
-                vec![
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                ],
-                vec![
-                    Cell::Unknown,
-                    Cell::Bomb,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Bomb,
-                    Cell::Bomb,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                ],
-                vec![
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                ],
-                vec![
-                    Cell::Bomb,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                ],
-                vec![
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Bomb,
-                    Cell::Unknown,
-                ],
-                vec![
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                ],
-                vec![
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Bomb,
-                    Cell::Unknown,
-                ],
-                vec![
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                ],
-                vec![
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Bomb,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                ],
-                vec![
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Bomb,
-                    Cell::Unknown,
-                ],
-                vec![
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                    Cell::Unknown,
-                ],
-            ];
-        }
+    fn get_pre_str() -> &'static str {
+        "?  ?  ?  ?  ?  ?  ?  ?  ?  ?  ?  ?  ?  ?  ?  ? 
+        2  2  1  1  3  F  3  F  F  F  3  2  2  ?  ?  ? 
+        F  1  0  0  1  1  2  3  F  3  1  1  F  2  2  2 
+        1  1  0  1  1  1  0  2  2  3  1  2  1  1  1  F 
+        0  0  0  1  F  3  2  2  F  2  F  1  0  0  1  1 
+        0  0  0  1  2  F  F  2  1  2  1  1  1  1  1  0 
+        1  2  1  1  1  2  2  1  0  1  1  1  1  F  2  1 
+        F  2  F  2  2  2  1  0  0  1  F  1  1  1  2  F 
+        1  2  1  2  F  F  1  0  0  1  1  1  0  0  1  1 
+        0  0  0  1  2  2  1  0  0  0  1  1  1  0  0  0 
+        0  0  0  0  0  0  0  1  1  1  1  F  2  1  1  0 
+        1  1  1  0  1  1  2  2  F  2  2  1  3  F  2  0 
+        1  F  1  1  2  F  3  F  3  F  1  0  2  F  2  0 
+        1  1  1  1  F  4  F  2  2  1  1  1  2  2  1  0 
+        0  0  0  1  2  F  2  1  0  0  0  1  F  1  1  1 
+        0  0  0  0  1  1  1  0  0  0  0  1  1  1  1  F"
+    }
 
-        Grid::from(cells, 8, 11).unwrap()
+    fn get_post_str() -> &'static str {
+        "?  ?  1  ?  ?  F  3  2  ?  F  ?  ?  1  ?  ?  ?
+        2  2  1  1  3  F  3  F  F  F  3  2  2  3  F  1
+        F  1  0  0  1  1  2  3  F  3  1  1  F  2  2  2
+        1  1  0  1  1  1  0  2  2  3  1  2  1  1  1  F
+        0  0  0  1  F  3  2  2  F  2  F  1  0  0  1  1
+        0  0  0  1  2  F  F  2  1  2  1  1  1  1  1  0
+        1  2  1  1  1  2  2  1  0  1  1  1  1  F  2  1
+        F  2  F  2  2  2  1  0  0  1  F  1  1  1  2  F
+        1  2  1  2  F  F  1  0  0  1  1  1  0  0  1  1
+        0  0  0  1  2  2  1  0  0  0  1  1  1  0  0  0
+        0  0  0  0  0  0  0  1  1  1  1  F  2  1  1  0
+        1  1  1  0  1  1  2  2  F  2  2  1  3  F  2  0
+        1  F  1  1  2  F  3  F  3  F  1  0  2  F  2  0
+        1  1  1  1  F  4  F  2  2  1  1  1  2  2  1  0
+        0  0  0  1  2  F  2  1  0  0  0  1  F  1  1  1
+        0  0  0  0  1  1  1  0  0  0  0  1  1  1  1  F"
     }
 
     #[test]
     #[ignore]
     fn permute_1() {
-        let grid = get_permute_1_grid(false);
-        let solved_grid = get_permute_1_grid(true);
+        time_test!();
 
-        let mut board = GameBoard::from(solved_grid).unwrap();
-        board.board = grid;
+        let pre = get_pre_str();
+        let post = get_post_str();
+        let solved = get_solved_str();
 
-        println!("{}", board);
-        let start_time = Instant::now();
-        board.permute_solve_step();
-        println!("{}\ntime: {}ms", board, start_time.elapsed().as_millis());
+        let mut pre_board = GameBoard::from_str(solved, pre).unwrap();
+        let post_board = GameBoard::from_str(solved, post).unwrap();
 
-        assert!(false);
+        println!("{}\n=========\n\n{}", pre_board, post_board);
+
+        pre_board.permute_solve_step();
+
+        assert_eq!(pre_board.board, post_board.board)
     }
 }
