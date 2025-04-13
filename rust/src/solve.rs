@@ -2,16 +2,16 @@ use crate::{Cell, board::GameBoard};
 
 impl GameBoard {
     pub fn simple_solve_step(&mut self) -> bool {
-        let pre_board = self.board.clone();
+        let pre_board = self.grid.clone();
 
         self.place_all_flags();
         self.chord_all();
 
-        pre_board != self.board
+        pre_board != self.grid
     }
 
     fn is_valid_bomb_pattern(&self, potential_bombs: &Vec<(u8, u8)>, pattern: u128) -> bool {
-        let mut board = self.board.clone();
+        let mut board = self.grid.clone();
 
         let mut current_pattern = pattern;
         let mut i = 0;
@@ -34,13 +34,13 @@ impl GameBoard {
     }
 
     pub fn permute_solve_step(&mut self) -> bool {
-        let pre_board = self.board.clone();
+        let pre_board = self.grid.clone();
 
         let mut potential_bombs: Vec<(u8, u8)> = Vec::new();
-        for cell in self.board.get_iter() {
+        for cell in self.grid.get_iter() {
             let (x, y) = cell.pos;
-            if let Some(Cell::Unknown) = self.board.get_cell(x.into(), y.into()) {
-                if self.board.adj_number(x.into(), y.into()).len() > 0 {
+            if let Some(Cell::Unknown) = self.grid.get_cell(x.into(), y.into()) {
+                if self.grid.adj_number(x.into(), y.into()).len() > 0 {
                     potential_bombs.push((x, y));
                 }
             }
@@ -94,7 +94,7 @@ impl GameBoard {
             let cell = potential_bombs[i];
 
             if ((flag_pattern >> i) & 0b1) == 1 {
-                self.board
+                self.grid
                     .set_cell(cell.0.into(), cell.1.into(), Cell::Flag)
                     .unwrap();
             }
@@ -107,7 +107,7 @@ impl GameBoard {
         // logical AND all valid patterns, if any digit is 1, it is guaranteed to be a bomb
         // logical OR all valid patterns, if any digit is 0, it is guaranteed to be a safe
 
-        pre_board != self.board
+        pre_board != self.grid
     }
 }
 
@@ -188,7 +188,7 @@ mod tests {
 
         pre_board.permute_solve_step();
 
-        let diff = pre_board.board.diff(&post_board.board).unwrap();
+        let diff = pre_board.grid.diff(&post_board.grid).unwrap();
         let mut diff_map = HashMap::new();
         for pos in diff {
             diff_map.insert(pos, (100, 100, 0));
@@ -196,12 +196,12 @@ mod tests {
 
         println!(
             "\nsolved:\n{}left:\n{}\nright:\n{}",
-            pre_board.solved_board,
-            pre_board.board,
-            post_board.board.to_string(Some(diff_map))
+            pre_board.solved_grid,
+            pre_board.grid,
+            post_board.grid.to_string(Some(diff_map))
         );
 
-        if pre_board.board != post_board.board {
+        if pre_board.grid != post_board.grid {
             assert!(false);
         }
     }

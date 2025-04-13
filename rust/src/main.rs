@@ -43,10 +43,10 @@ fn main() {
     // determine all possible starting cells
     let mut starting_cells: Vec<(u8, u8)> = Vec::new();
     let mut temp_board = board.clone();
-    for cell in temp_board.solved_board.get_iter() {
+    for cell in temp_board.solved_grid.get_iter() {
         let (x, y) = cell.pos;
         if cell.val == Cell::Number(0) {
-            if temp_board.board.get_cell(x.into(), y.into()) == Some(Cell::Unknown) {
+            if temp_board.grid.get_cell(x.into(), y.into()) == Some(Cell::Unknown) {
                 temp_board.flood_fill(x.into(), y.into());
                 starting_cells.push((x, y));
             }
