@@ -188,6 +188,8 @@ mod tests {
 
         pre_board.permute_solve_step();
 
+        println!("left:\n{}\nright:\n{}", pre_board.board, post_board.board);
+
         assert_eq!(pre_board.board, post_board.board)
     }
 }
