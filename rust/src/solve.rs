@@ -64,8 +64,7 @@ impl GameBoard {
 
         // if more than 16 potential bomb locations, do not even attempt
         if potential_bombs.len() > 16 {
-            println!("too complex");
-            return Ok(false);
+            return Err("too complex".to_string());
         }
 
         for pattern in 1..end_pattern {
@@ -75,7 +74,8 @@ impl GameBoard {
         }
 
         if valid_patterns.len() == 0 {
-            return Err("no valid patterns".to_string());
+            println!("no valid patterns");
+            return Ok(false);
         }
 
         let mut flag_pattern = end_pattern - 1;

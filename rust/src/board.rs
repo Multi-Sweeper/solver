@@ -145,20 +145,23 @@ impl GameBoard {
     }
 
     pub fn flood_fill(&mut self, x: i16, y: i16) -> Result<(), String> {
-        if self.grid.get_cell(x, y)? != Cell::Unknown {
-            return Ok(());
+        match self.grid.get_cell(x, y) {
+            Err(_) => return Ok(()),
+            Ok(Cell::Unknown) => (),
+            _ => return Ok(()),
         }
 
-        let cell = self.solved_grid.get_cell(x, y)?;
-        if cell == Cell::Bomb {
-            return Ok(());
-        }
-        // set player cell as solved cell value
-        self.grid.set_cell(x, y, cell)?;
-        // if solved cell value not zero, stop floodfill
-        // ie. continue floodfill only if cell is zero
-        if cell != Cell::Number(0) {
-            return Ok(());
+        if let Ok(cell) = self.solved_grid.get_cell(x, y) {
+            if cell == Cell::Bomb {
+                return Ok(());
+            }
+            // set player cell as solved cell value
+            self.grid.set_cell(x, y, cell)?;
+            // if solved cell value not zero, stop floodfill
+            // ie. continue floodfill only if cell is zero
+            if cell != Cell::Number(0) {
+                return Ok(());
+            }
         }
 
         self.flood_fill_all_adj(x, y)

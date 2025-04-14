@@ -9,6 +9,7 @@ pub fn strategy_simple(
     let mut step_summary: Vec<Vec<&str>> = Vec::new();
 
     let mut game_board = board.clone();
+    println!("starting: {:?}", starting_cell);
     game_board.flood_fill(starting_cell.0.into(), starting_cell.1.into())?;
 
     println!("= init =======================================");

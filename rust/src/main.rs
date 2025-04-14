@@ -35,8 +35,8 @@ impl Coloured for Cell {
 }
 
 fn main() -> Result<(), String> {
-    let board: GameBoard = GameBoard::new(9, 9, 10).unwrap();
-    // let board: GameBoard = GameBoard::new(16, 16, 40).unwrap();
+    // let board: GameBoard = GameBoard::new(9, 9, 10).unwrap();
+    let board: GameBoard = GameBoard::new(16, 16, 40).unwrap();
     // let board: GameBoard = GameBoard::new(30, 16, 99).unwrap();
     // let board: GameBoard = GameBoard::new(16, 16, 10).unwrap();
 
