@@ -4,7 +4,7 @@ pub fn unflatten<T: Clone + Debug>(
     flat_vec: Vec<T>,
     width: u8,
     height: u8,
-) -> Result<Vec<Vec<T>>, &'static str> {
+) -> Result<Vec<Vec<T>>, String> {
     let mut out: Vec<Vec<T>> = vec![Vec::new()];
 
     for elem in flat_vec {
@@ -13,15 +13,14 @@ pub fn unflatten<T: Clone + Debug>(
                 out.push(Vec::new())
             }
 
-            let row = out.last_mut().unwrap();
+            // TODO: can i keep the unwrap here instead of the ok_or?
+            let row = out.last_mut().ok_or("error unwrapping row")?;
             row.push(elem)
         }
     }
 
-    // assert!(out.len() == height as usize, "mismatch height");
-
     if out.len() != height as usize {
-        return Err("mismatch height");
+        return Err("mismatch height".to_string());
     }
 
     Ok(out)

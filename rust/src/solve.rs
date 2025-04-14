@@ -1,16 +1,20 @@
 use crate::{Cell, board::GameBoard};
 
 impl GameBoard {
-    pub fn simple_solve_step(&mut self) -> bool {
+    pub fn simple_solve_step(&mut self) -> Result<bool, String> {
         let pre_board = self.grid.clone();
 
-        self.place_all_flags();
-        self.chord_all();
+        self.place_all_flags()?;
+        self.chord_all()?;
 
-        pre_board != self.grid
+        Ok(pre_board != self.grid)
     }
 
-    fn is_valid_bomb_pattern(&self, potential_bombs: &Vec<(u8, u8)>, pattern: u128) -> bool {
+    fn is_valid_bomb_pattern(
+        &self,
+        potential_bombs: &Vec<(u8, u8)>,
+        pattern: u128,
+    ) -> Result<bool, String> {
         let mut board = self.grid.clone();
 
         let mut current_pattern = pattern;
@@ -33,22 +37,22 @@ impl GameBoard {
         board.valid_flags()
     }
 
-    pub fn permute_solve_step(&mut self) -> bool {
+    pub fn permute_solve_step(&mut self) -> Result<bool, String> {
         let pre_board = self.grid.clone();
 
         let mut potential_bombs: Vec<(u8, u8)> = Vec::new();
         for cell in self.grid.get_iter() {
             let (x, y) = cell.pos;
-            if let Some(Cell::Unknown) = self.grid.get_cell(x.into(), y.into()) {
-                if self.grid.adj_number(x.into(), y.into()).len() > 0 {
+            let cell = self.grid.get_cell(x.into(), y.into())?;
+            if cell == Cell::Unknown {
+                if self.grid.adj_number(x.into(), y.into())?.len() > 0 {
                     potential_bombs.push((x, y));
                 }
             }
         }
 
         if potential_bombs.len() > 127 {
-            println!("too many potential bombs");
-            return false;
+            return Err("too many potential bombs".to_string());
         }
 
         println!("potential_bombs: {:?}", potential_bombs);
@@ -61,18 +65,17 @@ impl GameBoard {
         // if more than 16 potential bomb locations, do not even attempt
         if potential_bombs.len() > 16 {
             println!("too complex");
-            return false;
+            return Ok(false);
         }
 
         for pattern in 1..end_pattern {
-            if self.is_valid_bomb_pattern(&potential_bombs, pattern) {
+            if self.is_valid_bomb_pattern(&potential_bombs, pattern)? {
                 valid_patterns.push(pattern);
             }
         }
 
         if valid_patterns.len() == 0 {
-            println!("no valid patterns");
-            return false;
+            return Err("no valid patterns".to_string());
         }
 
         let mut flag_pattern = end_pattern - 1;
@@ -100,14 +103,14 @@ impl GameBoard {
             }
 
             if ((safe_pattern >> i) & 0b1) == 0 {
-                self.flood_fill(cell.0.into(), cell.1.into());
+                self.flood_fill(cell.0.into(), cell.1.into())?;
             }
         }
 
         // logical AND all valid patterns, if any digit is 1, it is guaranteed to be a bomb
         // logical OR all valid patterns, if any digit is 0, it is guaranteed to be a safe
 
-        pre_board != self.grid
+        Ok(pre_board != self.grid)
     }
 }
 
@@ -177,7 +180,13 @@ mod tests {
     #[test]
     #[ignore]
     fn permute_1() {
-        // this takes ~70s for me
+        // this takes ~70s for me in debug build
+        // this takes ~7s for me in release build ?!?
+        //
+        // potential_bombs: [(13, 14), (14, 14), (15, 14), (0, 15), (1, 15), (2, 15), (3, 15), (4, 15), (5, 15), (6, 15), (7, 15), (9, 15), (10, 15), (11, 15), (12, 15), (13, 15)]
+        // end_pattern: 10000000000000000 (16)
+        // flag_pattern: 0000100100000010
+        // safe_pattern: 1011100111011010
         time_test!();
 
         let pre = get_pre_str();
@@ -187,7 +196,7 @@ mod tests {
         let mut pre_board = GameBoard::from_str(solved, pre).unwrap();
         let post_board = GameBoard::from_str(solved, post).unwrap();
 
-        pre_board.permute_solve_step();
+        pre_board.permute_solve_step().unwrap();
 
         let diff = pre_board.grid.diff(&post_board.grid).unwrap();
         let mut diff_map = HashMap::new();
@@ -196,14 +205,14 @@ mod tests {
         }
 
         println!(
-            "\nsolved:\n{}left:\n{}\nright:\n{}",
+            "\nsolved:\n{}\nleft:\n{}\nright:\n{}",
             pre_board.solved_grid,
             pre_board.grid,
             post_board.grid.to_string(Some(diff_map))
         );
 
         if pre_board.grid != post_board.grid {
-            assert!(false);
+            assert!(false, "pre_board.grid != post_board.grid");
         }
     }
 }

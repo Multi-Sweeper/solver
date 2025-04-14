@@ -34,7 +34,7 @@ impl Coloured for Cell {
     }
 }
 
-fn main() {
+fn main() -> Result<(), String> {
     let board: GameBoard = GameBoard::new(9, 9, 10).unwrap();
     // let board: GameBoard = GameBoard::new(16, 16, 40).unwrap();
     // let board: GameBoard = GameBoard::new(30, 16, 99).unwrap();
@@ -46,13 +46,13 @@ fn main() {
     for cell in temp_board.solved_grid.get_iter() {
         let (x, y) = cell.pos;
         if cell.val == Cell::Number(0) {
-            if temp_board.grid.get_cell(x.into(), y.into()) == Some(Cell::Unknown) {
+            if temp_board.grid.get_cell(x.into(), y.into())? == Cell::Unknown {
                 let pre_zeros = temp_board
                     .grid
                     .get_iter()
                     .filter(|cell| cell.val == Cell::Number(0))
                     .count();
-                temp_board.flood_fill(x.into(), y.into());
+                temp_board.flood_fill(x.into(), y.into())?;
                 let post_zeros = temp_board
                     .grid
                     .get_iter()
@@ -69,7 +69,7 @@ fn main() {
     let start_solve_time = Instant::now();
     let mut step_summary: Option<Vec<Vec<&str>>> = None;
     for starting_cell in &starting_cells_sorted[0..1] {
-        step_summary = strategy_simple(board.clone(), starting_cell.to_owned());
+        step_summary = strategy_simple(board.clone(), starting_cell.to_owned())?;
     }
 
     if step_summary.is_some() {
@@ -78,4 +78,6 @@ fn main() {
     } else {
         println!("could not solve");
     }
+
+    Ok(())
 }

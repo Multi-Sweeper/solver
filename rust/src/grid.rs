@@ -19,13 +19,13 @@ impl<T: Clone + Coloured + Hash + PartialEq + Eq> Grid<T> {
         }
     }
 
-    pub fn from(cells: Vec<Vec<T>>, width: u8, height: u8) -> Result<Self, &'static str> {
+    pub fn from(cells: Vec<Vec<T>>, width: u8, height: u8) -> Result<Self, String> {
         if cells.len() != height as usize {
-            return Err("cells.len != height");
+            return Err("cells.len != height".to_string());
         }
         for row in &cells {
             if row.len() != width as usize {
-                return Err("row != height");
+                return Err("row != height".to_string());
             }
         }
 
@@ -36,25 +36,32 @@ impl<T: Clone + Coloured + Hash + PartialEq + Eq> Grid<T> {
         })
     }
 
-    pub fn get_cell(&self, x: i16, y: i16) -> Option<T> {
+    fn assert_bounds(&self, x: i16, y: i16) -> Result<(), String> {
         if x < 0 || x >= self.width.into() {
-            return None;
+            Err("x is out of bounds".to_string())
         } else if y < 0 || y >= self.height.into() {
-            return None;
+            Err("y is out of bounds".to_string())
+        } else {
+            Ok(())
         }
-
-        self.cells
-            .get(((self.height as i16) - y - 1) as usize)?
-            .get(x as usize)
-            .cloned()
     }
 
-    pub fn set_cell(&mut self, x: i16, y: i16, cell_value: T) -> Result<(), &'static str> {
-        if x < 0 || x >= self.width.into() {
-            return Err("x is out of bounds");
-        } else if y < 0 || y >= self.height.into() {
-            return Err("y is out of bounds");
-        }
+    pub fn get_cell(&self, x: i16, y: i16) -> Result<T, String> {
+        self.assert_bounds(x, y)?;
+
+        let cell = self
+            .cells
+            .get(((self.height as i16) - y - 1) as usize)
+            .unwrap()
+            .get(x as usize)
+            .cloned()
+            .unwrap();
+
+        Ok(cell)
+    }
+
+    pub fn set_cell(&mut self, x: i16, y: i16, cell_value: T) -> Result<(), String> {
+        self.assert_bounds(x, y)?;
 
         self.cells[(self.height - (y as u8) - 1) as usize][x as usize] = cell_value;
 
@@ -70,7 +77,12 @@ impl<T: Clone + Coloured + Hash + PartialEq + Eq> Grid<T> {
         }
     }
 
-    pub fn adj_cells(&self, x: u8, y: u8, filter_cells: Option<HashSet<T>>) -> Vec<(u8, u8)> {
+    pub fn adj_cells(
+        &self,
+        x: u8,
+        y: u8,
+        filter_cells: Option<HashSet<T>>,
+    ) -> Result<Vec<(u8, u8)>, String> {
         let mut out: Vec<(u8, u8)> = Vec::new();
         let deltas: [(i8, i8); 8] = [
             (-1, 1),
@@ -84,11 +96,9 @@ impl<T: Clone + Coloured + Hash + PartialEq + Eq> Grid<T> {
         ];
 
         for d in deltas {
-            let elem = self.get_cell(x as i16 + d.0 as i16, y as i16 + d.1 as i16);
-
-            if let Some(e) = elem {
+            if let Ok(elem) = self.get_cell(x as i16 + d.0 as i16, y as i16 + d.1 as i16) {
                 if let Some(ref filter) = filter_cells {
-                    if filter.contains(&e) {
+                    if filter.contains(&elem) {
                         out.push(((x as i16 + d.0 as i16) as u8, (y as i16 + d.1 as i16) as u8));
                     }
                 } else {
@@ -97,7 +107,7 @@ impl<T: Clone + Coloured + Hash + PartialEq + Eq> Grid<T> {
             }
         }
 
-        out
+        Ok(out)
     }
 
     pub fn diff(&self, other: &Self) -> Result<Vec<(u8, u8)>, String> {
@@ -111,7 +121,7 @@ impl<T: Clone + Coloured + Hash + PartialEq + Eq> Grid<T> {
 
         for cell in self.get_iter() {
             let (x, y) = cell.pos;
-            let other_cell = other.get_cell(x.into(), y.into()).unwrap();
+            let other_cell = other.get_cell(x.into(), y.into())?;
 
             if cell.val != other_cell {
                 out.push(cell.pos);
@@ -213,17 +223,17 @@ impl Grid<Cell> {
         Ok(Grid::from(cells, width, height)?)
     }
 
-    pub fn adj_bombs(&self, x: u8, y: u8) -> Vec<(u8, u8)> {
+    pub fn adj_bombs(&self, x: u8, y: u8) -> Result<Vec<(u8, u8)>, String> {
         let hash_set = HashSet::from([Cell::Bomb]);
         self.adj_cells(x, y, Some(hash_set))
     }
 
-    pub fn adj_flags(&self, x: u8, y: u8) -> Vec<(u8, u8)> {
+    pub fn adj_flags(&self, x: u8, y: u8) -> Result<Vec<(u8, u8)>, String> {
         let hash_set = HashSet::from([Cell::Flag]);
         self.adj_cells(x, y, Some(hash_set))
     }
 
-    pub fn adj_number(&self, x: u8, y: u8) -> Vec<(u8, u8)> {
+    pub fn adj_number(&self, x: u8, y: u8) -> Result<Vec<(u8, u8)>, String> {
         let hash_set = HashSet::from([
             Cell::Number(1),
             Cell::Number(2),
@@ -237,40 +247,22 @@ impl Grid<Cell> {
         self.adj_cells(x, y, Some(hash_set))
     }
 
-    pub fn valid_flags(&self) -> bool {
+    pub fn valid_flags(&self) -> Result<bool, String> {
         for cell in self.get_iter() {
             let (x, y) = cell.pos;
             if let Cell::Number(num) = cell.val {
                 if self
-                    .adj_cells(x, y, Some(HashSet::from([Cell::Flag])))
+                    .adj_cells(x, y, Some(HashSet::from([Cell::Flag])))?
                     .len()
                     != num.into()
                 {
-                    return false;
+                    return Ok(false);
                 }
             }
         }
-        true
+        Ok(true)
     }
 }
-
-// impl Grid<Option<u8>> {
-//     pub fn incr_cell_num(&mut self, x: i16, y: i16, incr: u8) -> Result<(), &'static str> {
-//         if x < 0 || x >= self.width.into() {
-//             return Err("x is out of bounds");
-//         } else if y < 0 || y >= self.height.into() {
-//             return Err("y is out of bounds");
-//         }
-
-//         let cell = self.get_cell(x, y).unwrap();
-
-//         self.set_cell(x, y, cell + incr)
-//     }
-
-//     pub fn incr_cell(&mut self, x: i16, y: i16) -> Result<(), &'static str> {
-//         self.incr_cell_num(x, y, 1)
-//     }
-// }
 
 impl<T: Clone + Coloured + Hash + PartialEq + Eq> Display for Grid<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -462,7 +454,7 @@ mod tests {
         let grid = generate_grid();
 
         let cell = grid.get_cell(0, 0);
-        assert!(cell.is_some());
+        assert!(cell.is_ok());
 
         let cell = cell.unwrap();
         println!("{}", grid);
@@ -474,7 +466,7 @@ mod tests {
         let grid = generate_grid();
 
         let cell = grid.get_cell(2, 2);
-        assert!(cell.is_some());
+        assert!(cell.is_ok());
 
         let cell = cell.unwrap();
         println!("{}", grid);
@@ -487,7 +479,7 @@ mod tests {
 
         let cell = grid.get_cell(4, 2);
         println!("{}", grid);
-        assert!(cell.is_none());
+        assert!(cell.is_err());
     }
 
     #[test]
@@ -514,7 +506,7 @@ mod tests {
     fn adj_cells_1() {
         let grid = generate_grid();
         println!("{}", grid);
-        let adj_cells = grid.adj_cells(1, 1, None);
+        let adj_cells = grid.adj_cells(1, 1, None).unwrap();
         let adj_cells: HashSet<&(u8, u8), RandomState> = HashSet::from_iter(adj_cells.iter());
 
         let expected_adj_cells: HashSet<&(u8, u8)> = HashSet::from_iter(
@@ -538,7 +530,9 @@ mod tests {
     fn adj_cells_2() {
         let grid = generate_grid();
         println!("{}", grid);
-        let adj_cells = grid.adj_cells(1, 1, Some(HashSet::from([Cell::Unknown])));
+        let adj_cells = grid
+            .adj_cells(1, 1, Some(HashSet::from([Cell::Unknown])))
+            .unwrap();
         let adj_cells: HashSet<&(u8, u8), RandomState> = HashSet::from_iter(adj_cells.iter());
 
         let expected_adj_cells: HashSet<&(u8, u8)> =
@@ -551,7 +545,7 @@ mod tests {
     fn adj_cells_3() {
         let grid = generate_grid();
         println!("{}", grid);
-        let adj_cells = grid.adj_number(1, 1);
+        let adj_cells = grid.adj_number(1, 1).unwrap();
         let adj_cells: HashSet<&(u8, u8), RandomState> = HashSet::from_iter(adj_cells.iter());
 
         let expected_adj_cells: HashSet<&(u8, u8)> = HashSet::from_iter([(2, 0)].iter());
@@ -563,7 +557,7 @@ mod tests {
     fn adj_cells_4() {
         let grid = generate_grid();
         println!("{}", grid);
-        let adj_cells = grid.adj_flags(1, 1);
+        let adj_cells = grid.adj_flags(1, 1).unwrap();
         let adj_cells: HashSet<&(u8, u8), RandomState> = HashSet::from_iter(adj_cells.iter());
 
         let expected_adj_cells: HashSet<&(u8, u8)> = HashSet::from_iter([(2, 2)].iter());
@@ -575,7 +569,7 @@ mod tests {
     fn adj_cells_5() {
         let grid = generate_grid();
         println!("{}", grid);
-        let adj_cells = grid.adj_flags(0, 1);
+        let adj_cells = grid.adj_flags(0, 1).unwrap();
         let adj_cells: HashSet<&(u8, u8), RandomState> = HashSet::from_iter(adj_cells.iter());
 
         let expected_adj_cells: HashSet<&(u8, u8)> = HashSet::from_iter([].iter());
@@ -587,7 +581,7 @@ mod tests {
     fn adj_cells_6() {
         let grid = generate_grid();
         println!("{}", grid);
-        let adj_cells = grid.adj_bombs(0, 2);
+        let adj_cells = grid.adj_bombs(0, 2).unwrap();
         let adj_cells: HashSet<&(u8, u8), RandomState> = HashSet::from_iter(adj_cells.iter());
 
         let expected_adj_cells: HashSet<&(u8, u8)> = HashSet::from_iter([(1, 1)].iter());
