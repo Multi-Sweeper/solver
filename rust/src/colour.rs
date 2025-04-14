@@ -33,3 +33,12 @@ impl Coloured for String {
         }
     }
 }
+
+impl Coloured for Option<u8> {
+    fn to_coloured(&self, background: Option<(u8, u8, u8)>) -> String {
+        match self {
+            None => colour_str("*", (0, 0, 0), background),
+            Some(num) => num.to_string().to_coloured(background),
+        }
+    }
+}

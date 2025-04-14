@@ -9,6 +9,7 @@ pub struct GameBoard {
     pub height: u8,
     pub solved_grid: Grid<Cell>,
     pub grid: Grid<Cell>,
+    pub flag_adj_grid: Grid<Option<u8>>,
     num_bombs: u16,
     placed_flags: u16,
 }
@@ -63,11 +64,23 @@ impl GameBoard {
         let width = solved_grid.width;
         let height = solved_grid.height;
 
+        let mut flag_adj_grid = Grid::new(width, height, None);
+        for cell in solved_grid.get_iter() {
+            let (x, y) = cell.pos;
+            match cell.val {
+                Cell::Number(num) => flag_adj_grid
+                    .set_cell(x.into(), y.into(), Some(num))
+                    .unwrap(),
+                _ => continue,
+            }
+        }
+
         Ok(GameBoard {
             width,
             height,
             solved_grid,
             grid: Grid::new(width, height, Cell::Unknown),
+            flag_adj_grid,
             num_bombs,
             placed_flags: 0,
         })
@@ -93,11 +106,23 @@ impl GameBoard {
             .filter(|c| c.val == Cell::Flag)
             .count() as u16;
 
+        let mut flag_adj_grid = Grid::new(solved_grid.width, solved_grid.height, None);
+        for cell in solved_grid.get_iter() {
+            let (x, y) = cell.pos;
+            match cell.val {
+                Cell::Number(num) => flag_adj_grid
+                    .set_cell(x.into(), y.into(), Some(num))
+                    .unwrap(),
+                _ => continue,
+            }
+        }
+
         Ok(GameBoard {
             width: solved_grid.width,
             height: solved_grid.height,
             solved_grid,
             grid: player_grid,
+            flag_adj_grid,
             num_bombs,
             placed_flags,
         })
@@ -204,16 +229,25 @@ impl GameBoard {
         }
     }
 
+    pub fn place_flag(&mut self, x: u8, y: u8) {
+        self.grid.set_cell(x.into(), y.into(), Cell::Flag).unwrap();
+        // for (x, y) in self.grid.adj_cells(x, y, None) {
+        //     self.flag_adj_grid.incr_cell(x.into(), y.into()).unwrap();
+        // }
+    }
+
     pub fn place_flags(&mut self, x: u8, y: u8) {
         if let Some(Cell::Number(num)) = self.grid.get_cell(x.into(), y.into()) {
             let adj = self
                 .grid
                 .adj_cells(x, y, Some(HashSet::from([Cell::Unknown, Cell::Flag])));
             if adj.len() == num as usize {
-                for d in adj {
-                    self.grid
-                        .set_cell(d.0.into(), d.1.into(), Cell::Flag)
-                        .unwrap();
+                for (x, y) in adj {
+                    if let Some(cell) = self.grid.get_cell(x.into(), y.into()) {
+                        if cell != Cell::Flag {
+                            self.place_flag(x, y);
+                        }
+                    }
                 }
             }
         }
@@ -229,6 +263,12 @@ impl GameBoard {
 
 impl Display for GameBoard {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(format!("{}\n\n{}", self.solved_grid, self.grid).as_str())
+        f.write_str(
+            format!(
+                "solved:\n{}\nflag adj:\n{}\ncurrent:\n{}",
+                self.solved_grid, self.flag_adj_grid, self.grid
+            )
+            .as_str(),
+        )
     }
 }

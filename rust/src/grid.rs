@@ -254,6 +254,24 @@ impl Grid<Cell> {
     }
 }
 
+// impl Grid<Option<u8>> {
+//     pub fn incr_cell_num(&mut self, x: i16, y: i16, incr: u8) -> Result<(), &'static str> {
+//         if x < 0 || x >= self.width.into() {
+//             return Err("x is out of bounds");
+//         } else if y < 0 || y >= self.height.into() {
+//             return Err("y is out of bounds");
+//         }
+
+//         let cell = self.get_cell(x, y).unwrap();
+
+//         self.set_cell(x, y, cell + incr)
+//     }
+
+//     pub fn incr_cell(&mut self, x: i16, y: i16) -> Result<(), &'static str> {
+//         self.incr_cell_num(x, y, 1)
+//     }
+// }
+
 impl<T: Clone + Coloured + Hash + PartialEq + Eq> Display for Grid<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(self.to_string(None).as_str())
