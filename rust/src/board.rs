@@ -125,19 +125,19 @@ impl GameBoard {
             let (x, y) = cell.pos;
 
             let solved_elem = cell.val;
-            let player_elem = self.grid.get_cell(x as i16, y as i16)?;
-
-            if let Cell::Number(_) = solved_elem {
-                if solved_elem == player_elem {
-                    continue;
-                } else {
-                    return Ok(false);
-                }
-            } else if solved_elem == Cell::Bomb {
-                if player_elem == Cell::Unknown || player_elem == Cell::Flag {
-                    continue;
-                } else {
-                    return Ok(false);
+            if let Some(player_elem) = self.grid.get_cell(x as i16, y as i16) {
+                if let Cell::Number(_) = solved_elem {
+                    if solved_elem == player_elem {
+                        continue;
+                    } else {
+                        return Ok(false);
+                    }
+                } else if solved_elem == Cell::Bomb {
+                    if player_elem == Cell::Unknown || player_elem == Cell::Flag {
+                        continue;
+                    } else {
+                        return Ok(false);
+                    }
                 }
             }
         }
@@ -146,12 +146,12 @@ impl GameBoard {
 
     pub fn flood_fill(&mut self, x: i16, y: i16) -> Result<(), String> {
         match self.grid.get_cell(x, y) {
-            Err(_) => return Ok(()),
-            Ok(Cell::Unknown) => (),
+            None => return Ok(()),
+            Some(Cell::Unknown) => (),
             _ => return Ok(()),
         }
 
-        if let Ok(cell) = self.solved_grid.get_cell(x, y) {
+        if let Some(cell) = self.solved_grid.get_cell(x, y) {
             if cell == Cell::Bomb {
                 return Ok(());
             }
@@ -187,10 +187,10 @@ impl GameBoard {
     }
 
     pub fn chord(&mut self, x: i16, y: i16) -> Result<(), String> {
-        let cell = self.grid.get_cell(x, y)?;
+        let cell = self.grid.get_cell(x, y);
 
         match cell {
-            Cell::Number(num) => {
+            Some(Cell::Number(num)) => {
                 if num == 0 {
                     return Ok(()); // return if cell is 0
                 }
@@ -224,16 +224,17 @@ impl GameBoard {
     }
 
     pub fn place_flags(&mut self, x: u8, y: u8) -> Result<(), String> {
-        let cell = self.grid.get_cell(x.into(), y.into())?;
+        let cell = self.grid.get_cell(x.into(), y.into());
         let adj = self
             .grid
             .adj_cells(x, y, Some(HashSet::from([Cell::Unknown, Cell::Flag])))?;
 
-        if let Cell::Number(num) = cell {
+        if let Some(Cell::Number(num)) = cell {
             if adj.len() == num as usize {
                 for (x, y) in adj {
-                    if self.grid.get_cell(x.into(), y.into())? != Cell::Flag {
-                        self.place_flag(x, y)?;
+                    match self.grid.get_cell(x.into(), y.into()) {
+                        Some(Cell::Flag) => (),
+                        _ => self.place_flag(x, y)?,
                     }
                 }
             }

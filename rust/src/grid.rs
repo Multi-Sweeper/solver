@@ -46,8 +46,10 @@ impl<T: Clone + Coloured + Hash + PartialEq + Eq> Grid<T> {
         }
     }
 
-    pub fn get_cell(&self, x: i16, y: i16) -> Result<T, String> {
-        self.assert_bounds(x, y)?;
+    pub fn get_cell(&self, x: i16, y: i16) -> Option<T> {
+        if self.assert_bounds(x, y).is_err() {
+            return None;
+        }
 
         let cell = self
             .cells
@@ -57,7 +59,7 @@ impl<T: Clone + Coloured + Hash + PartialEq + Eq> Grid<T> {
             .cloned()
             .unwrap();
 
-        Ok(cell)
+        Some(cell)
     }
 
     pub fn set_cell(&mut self, x: i16, y: i16, cell_value: T) -> Result<(), String> {
@@ -96,7 +98,7 @@ impl<T: Clone + Coloured + Hash + PartialEq + Eq> Grid<T> {
         ];
 
         for d in deltas {
-            if let Ok(elem) = self.get_cell(x as i16 + d.0 as i16, y as i16 + d.1 as i16) {
+            if let Some(elem) = self.get_cell(x as i16 + d.0 as i16, y as i16 + d.1 as i16) {
                 if let Some(ref filter) = filter_cells {
                     if filter.contains(&elem) {
                         out.push(((x as i16 + d.0 as i16) as u8, (y as i16 + d.1 as i16) as u8));
@@ -121,10 +123,10 @@ impl<T: Clone + Coloured + Hash + PartialEq + Eq> Grid<T> {
 
         for cell in self.get_iter() {
             let (x, y) = cell.pos;
-            let other_cell = other.get_cell(x.into(), y.into())?;
-
-            if cell.val != other_cell {
-                out.push(cell.pos);
+            if let Some(other_cell) = other.get_cell(x.into(), y.into()) {
+                if cell.val != other_cell {
+                    out.push(cell.pos);
+                }
             }
         }
 
@@ -454,7 +456,7 @@ mod tests {
         let grid = generate_grid();
 
         let cell = grid.get_cell(0, 0);
-        assert!(cell.is_ok());
+        assert!(cell.is_some());
 
         let cell = cell.unwrap();
         println!("{}", grid);
@@ -466,7 +468,7 @@ mod tests {
         let grid = generate_grid();
 
         let cell = grid.get_cell(2, 2);
-        assert!(cell.is_ok());
+        assert!(cell.is_some());
 
         let cell = cell.unwrap();
         println!("{}", grid);
@@ -479,7 +481,7 @@ mod tests {
 
         let cell = grid.get_cell(4, 2);
         println!("{}", grid);
-        assert!(cell.is_err());
+        assert!(cell.is_none());
     }
 
     #[test]

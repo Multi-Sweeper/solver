@@ -46,7 +46,7 @@ fn main() -> Result<(), String> {
     for cell in temp_board.solved_grid.get_iter() {
         let (x, y) = cell.pos;
         if cell.val == Cell::Number(0) {
-            if temp_board.grid.get_cell(x.into(), y.into())? == Cell::Unknown {
+            if let Some(Cell::Unknown) = temp_board.grid.get_cell(x.into(), y.into()) {
                 let pre_zeros = temp_board
                     .grid
                     .get_iter()

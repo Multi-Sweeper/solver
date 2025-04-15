@@ -43,10 +43,11 @@ impl GameBoard {
         let mut potential_bombs: Vec<(u8, u8)> = Vec::new();
         for cell in self.grid.get_iter() {
             let (x, y) = cell.pos;
-            let cell = self.grid.get_cell(x.into(), y.into())?;
-            if cell == Cell::Unknown {
-                if self.grid.adj_number(x.into(), y.into())?.len() > 0 {
-                    potential_bombs.push((x, y));
+            if let Some(cell) = self.grid.get_cell(x.into(), y.into()) {
+                if cell == Cell::Unknown {
+                    if self.grid.adj_number(x.into(), y.into())?.len() > 0 {
+                        potential_bombs.push((x, y));
+                    }
                 }
             }
         }
