@@ -248,30 +248,17 @@ impl Grid<Cell> {
         ]);
         self.adj_cells(x, y, Some(hash_set))
     }
-
-    pub fn valid_flags(&self) -> Result<bool, String> {
-        for cell in self.get_iter() {
-            let (x, y) = cell.pos;
-            if let Cell::Number(num) = cell.val {
-                if self
-                    .adj_cells(x, y, Some(HashSet::from([Cell::Flag])))?
-                    .len()
-                    != num.into()
-                {
-                    return Ok(false);
-                }
-            }
-        }
-        Ok(true)
-    }
 }
 
 impl Grid<Option<u8>> {
-    pub fn dec(&mut self, x: u8, y: u8) -> Result<(), String> {
+    pub fn decr(&mut self, x: u8, y: u8) -> Result<(), String> {
         if let Some(cell) = self.get_cell(x.into(), y.into()) {
             if let Some(num) = cell {
                 if num <= 0 {
-                    return Err("num <= 0".to_string());
+                    return Err(format!(
+                        "num <= 0 | attempted to dec value at ({}, {}) = {}",
+                        x, y, num
+                    ));
                 }
 
                 self.set_cell(x.into(), y.into(), Some(num - 1))?;

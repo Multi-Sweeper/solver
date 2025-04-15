@@ -15,7 +15,7 @@ impl GameBoard {
         potential_bombs: &Vec<(u8, u8)>,
         pattern: u128,
     ) -> Result<bool, String> {
-        let mut board = self.grid.clone();
+        let mut board = self.clone();
 
         let mut current_pattern = pattern;
         let mut i = 0;
@@ -24,17 +24,27 @@ impl GameBoard {
             let is_bomb = (current_pattern & 0b1) == 1;
 
             if is_bomb {
-                let cell = potential_bombs[i];
-                board
-                    .set_cell(cell.0.into(), cell.1.into(), Cell::Flag)
-                    .unwrap();
+                let (x, y) = potential_bombs[i];
+                if board.place_flag(x, y).is_err() {
+                    return Ok(false);
+                }
             }
 
             current_pattern >>= 1;
             i += 1;
         }
 
-        board.valid_flags()
+        for cell in board.grid.get_iter() {
+            let (x, y) = cell.pos;
+            if let Cell::Number(_) = cell.val {
+                let flag_adj_val = board.flag_adj_grid.get_cell(x.into(), y.into());
+                if flag_adj_val != Some(Some(0)) {
+                    return Ok(false);
+                }
+            }
+        }
+
+        Ok(true)
     }
 
     pub fn permute_solve_step(&mut self) -> Result<bool, String> {
@@ -63,8 +73,8 @@ impl GameBoard {
 
         println!("end_pattern: {:b} ({})", end_pattern, potential_bombs.len());
 
-        // if more than 16 potential bomb locations, do not even attempt
-        if potential_bombs.len() > 16 {
+        // if more than 20 potential bomb locations, do not even attempt
+        if potential_bombs.len() > 20 {
             return Err("too complex".to_string());
         }
 
@@ -78,6 +88,8 @@ impl GameBoard {
             println!("no valid patterns");
             return Ok(false);
         }
+
+        println!("valid_patterns: {:?}", valid_patterns);
 
         let mut flag_pattern = end_pattern - 1;
         let mut safe_pattern = 0u128;
@@ -95,16 +107,14 @@ impl GameBoard {
         );
 
         for i in 0..potential_bombs.len() {
-            let cell = potential_bombs[i];
+            let (x, y) = potential_bombs[i];
 
             if ((flag_pattern >> i) & 0b1) == 1 {
-                self.grid
-                    .set_cell(cell.0.into(), cell.1.into(), Cell::Flag)
-                    .unwrap();
+                self.place_flag(x, y)?;
             }
 
             if ((safe_pattern >> i) & 0b1) == 0 {
-                self.flood_fill(cell.0.into(), cell.1.into())?;
+                self.flood_fill(x.into(), y.into())?;
             }
         }
 
@@ -183,6 +193,9 @@ mod tests {
     fn permute_1() {
         // this takes ~70s for me in debug build
         // this takes ~7s for me in release build ?!?
+        // AFTER FLAG ADJ GRID OPTIMIZATION:
+        // this takes ~3s for me in debug build
+        // this takes ~1s for me in release build (wowie)
         //
         // potential_bombs: [(13, 14), (14, 14), (15, 14), (0, 15), (1, 15), (2, 15), (3, 15), (4, 15), (5, 15), (6, 15), (7, 15), (9, 15), (10, 15), (11, 15), (12, 15), (13, 15)]
         // end_pattern: 10000000000000000 (16)
@@ -197,6 +210,7 @@ mod tests {
         let mut pre_board = GameBoard::from_str(solved, pre).unwrap();
         let post_board = GameBoard::from_str(solved, post).unwrap();
 
+        let pre_solve = pre_board.clone();
         pre_board.permute_solve_step().unwrap();
 
         let diff = pre_board.grid.diff(&post_board.grid).unwrap();
@@ -206,14 +220,15 @@ mod tests {
         }
 
         println!(
-            "\nsolved:\n{}\nleft:\n{}\nright:\n{}",
+            "\nsolved:\n{}\npre solved:\n{}\npost solved:\n{}\nexpected:\n{}",
             pre_board.solved_grid,
+            pre_solve.grid,
             pre_board.grid,
             post_board.grid.to_string(Some(diff_map))
         );
 
         if pre_board.grid != post_board.grid {
-            assert!(false, "pre_board.grid != post_board.grid");
+            assert!(false, "solved board != expected solved board");
         }
     }
 }

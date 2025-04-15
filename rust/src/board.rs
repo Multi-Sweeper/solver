@@ -1,6 +1,6 @@
 use crate::{Cell, grid::Grid, utils::unflatten};
 use rand::seq::SliceRandom;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fmt::Display;
 
 #[derive(Clone)]
@@ -95,10 +95,11 @@ impl GameBoard {
             .filter(|c| c.val == Cell::Bomb)
             .count() as u16;
 
-        let placed_flags = player_grid
+        let placed_flags: Vec<(u8, u8)> = player_grid
             .get_iter()
             .filter(|c| c.val == Cell::Flag)
-            .count() as u16;
+            .map(|c| c.pos)
+            .collect();
 
         let mut flag_adj_grid = Grid::new(solved_grid.width, solved_grid.height, None);
         for cell in solved_grid.get_iter() {
@@ -109,15 +110,21 @@ impl GameBoard {
             }
         }
 
-        Ok(GameBoard {
+        let mut board = GameBoard {
             width: solved_grid.width,
             height: solved_grid.height,
             solved_grid,
             grid: player_grid,
             flag_adj_grid,
             num_bombs,
-            placed_flags,
-        })
+            placed_flags: placed_flags.len() as u16,
+        };
+
+        for (x, y) in placed_flags {
+            board.place_flag(x, y).unwrap();
+        }
+
+        Ok(board)
     }
 
     pub fn is_solved(&self) -> Result<bool, String> {
@@ -217,7 +224,7 @@ impl GameBoard {
     pub fn place_flag(&mut self, x: u8, y: u8) -> Result<(), String> {
         self.grid.set_cell(x.into(), y.into(), Cell::Flag)?;
         for (x, y) in self.grid.adj_cells(x, y, None)? {
-            self.flag_adj_grid.dec(x, y)?;
+            self.flag_adj_grid.decr(x, y)?;
         }
 
         Ok(())
@@ -255,10 +262,23 @@ impl GameBoard {
 
 impl Display for GameBoard {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let flag_pos: Vec<(u8, u8)> = self
+            .grid
+            .get_iter()
+            .filter(|cell| cell.val == Cell::Flag)
+            .map(|cell| cell.pos)
+            .collect();
+        let mut flag_pos_map = HashMap::new();
+        for pos in flag_pos {
+            flag_pos_map.insert(pos, (100, 50, 50));
+        }
+
         f.write_str(
             format!(
                 "solved:\n{}\nflag adj:\n{}\ncurrent:\n{}",
-                self.solved_grid, self.flag_adj_grid, self.grid
+                self.solved_grid,
+                self.flag_adj_grid.to_string(Some(flag_pos_map)),
+                self.grid
             )
             .as_str(),
         )
