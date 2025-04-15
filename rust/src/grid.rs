@@ -266,6 +266,22 @@ impl Grid<Cell> {
     }
 }
 
+impl Grid<Option<u8>> {
+    pub fn dec(&mut self, x: u8, y: u8) -> Result<(), String> {
+        if let Some(cell) = self.get_cell(x.into(), y.into()) {
+            if let Some(num) = cell {
+                if num <= 0 {
+                    return Err("num <= 0".to_string());
+                }
+
+                self.set_cell(x.into(), y.into(), Some(num - 1))?;
+            }
+        }
+
+        Ok(())
+    }
+}
+
 impl<T: Clone + Coloured + Hash + PartialEq + Eq> Display for Grid<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(self.to_string(None).as_str())

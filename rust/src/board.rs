@@ -216,9 +216,9 @@ impl GameBoard {
 
     pub fn place_flag(&mut self, x: u8, y: u8) -> Result<(), String> {
         self.grid.set_cell(x.into(), y.into(), Cell::Flag)?;
-        // for (x, y) in self.grid.adj_cells(x, y, None) {
-        //     self.flag_adj_grid.incr_cell(x.into(), y.into()).unwrap();
-        // }
+        for (x, y) in self.grid.adj_cells(x, y, None)? {
+            self.flag_adj_grid.dec(x, y)?;
+        }
 
         Ok(())
     }
