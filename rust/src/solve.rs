@@ -1,5 +1,31 @@
 use crate::{Cell, board::GameBoard};
 
+fn calc_result_patterns(
+    potential_bombs: &Vec<(u8, u8)>,
+    valid_patterns: &Vec<u128>,
+    end_pattern: u128,
+) -> (u128, u128) {
+    let mut flag_pattern = end_pattern - 1;
+    let mut safe_pattern = 0u128;
+
+    for pattern in valid_patterns {
+        flag_pattern &= pattern;
+        safe_pattern |= pattern;
+    }
+
+    // logical OR all valid patterns, if any digit is 0, it is guaranteed to be a safe
+    // logical AND all valid patterns, if any digit is 1, it is guaranteed to be a bomb
+
+    println!(
+        "flag_pattern: {:0width$b}\nsafe_pattern: {:0width$b}",
+        flag_pattern,
+        safe_pattern,
+        width = potential_bombs.len()
+    );
+
+    (flag_pattern, safe_pattern)
+}
+
 impl GameBoard {
     pub fn simple_solve_step(&mut self) -> Result<bool, String> {
         let pre_board = self.grid.clone();
@@ -34,6 +60,8 @@ impl GameBoard {
             i += 1;
         }
 
+        // TODO: instead of iterating over all cells in the grid, i only need to check all number cells
+        // around a potential bomb
         for cell in board.grid.get_iter() {
             let (x, y) = cell.pos;
             if let Cell::Number(_) = cell.val {
@@ -47,20 +75,28 @@ impl GameBoard {
         Ok(true)
     }
 
-    pub fn permute_solve_step(&mut self) -> Result<bool, String> {
-        let pre_board = self.grid.clone();
-
-        let mut potential_bombs: Vec<(u8, u8)> = Vec::new();
+    fn potential_bombs(&self) -> Result<Vec<(u8, u8)>, String> {
+        let mut out: Vec<(u8, u8)> = Vec::new();
         for cell in self.grid.get_iter() {
             let (x, y) = cell.pos;
             if let Some(cell) = self.grid.get_cell(x.into(), y.into()) {
                 if cell == Cell::Unknown {
                     if self.grid.adj_number(x.into(), y.into())?.len() > 0 {
-                        potential_bombs.push((x, y));
+                        out.push((x, y));
                     }
                 }
             }
         }
+
+        Ok(out)
+    }
+
+    pub fn permute_solve_step(&mut self) -> Result<bool, String> {
+        // TODO: i can get rid of this clone by simply having a flag on Grid to
+        // represent that something has changed/progress has been made
+        let pre_board = self.grid.clone();
+
+        let potential_bombs = self.potential_bombs()?;
 
         if potential_bombs.len() > 127 {
             return Err("too many potential bombs".to_string());
@@ -91,20 +127,8 @@ impl GameBoard {
 
         println!("valid_patterns: {:?}", valid_patterns);
 
-        let mut flag_pattern = end_pattern - 1;
-        let mut safe_pattern = 0u128;
-
-        for pattern in valid_patterns {
-            flag_pattern &= pattern;
-            safe_pattern |= pattern;
-        }
-
-        println!(
-            "flag_pattern: {:0width$b}\nsafe_pattern: {:0width$b}",
-            flag_pattern,
-            safe_pattern,
-            width = potential_bombs.len()
-        );
+        let (flag_pattern, safe_pattern) =
+            calc_result_patterns(&potential_bombs, &valid_patterns, end_pattern);
 
         for i in 0..potential_bombs.len() {
             let (x, y) = potential_bombs[i];
@@ -117,9 +141,6 @@ impl GameBoard {
                 self.flood_fill(x.into(), y.into())?;
             }
         }
-
-        // logical AND all valid patterns, if any digit is 1, it is guaranteed to be a bomb
-        // logical OR all valid patterns, if any digit is 0, it is guaranteed to be a safe
 
         Ok(pre_board != self.grid)
     }
