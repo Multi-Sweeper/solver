@@ -1,0 +1,75 @@
+use std::fmt::Debug;
+
+pub fn unflatten<T: Clone + Debug>(
+    flat_vec: Vec<T>,
+    width: u8,
+    height: u8,
+) -> Result<Vec<Vec<T>>, String> {
+    let mut out: Vec<Vec<T>> = vec![Vec::new()];
+
+    for elem in flat_vec {
+        if let Some(row) = out.last_mut() {
+            if row.len() >= width as usize {
+                out.push(Vec::new())
+            }
+
+            // TODO: can i keep the unwrap here instead of the ok_or?
+            let row = out.last_mut().ok_or("error unwrapping row")?;
+            row.push(elem)
+        }
+    }
+
+    if out.len() != height as usize {
+        return Err("mismatch height".to_string());
+    }
+
+    Ok(out)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn unflatten_1() {
+        let flat = vec![
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        ];
+
+        let grid = vec![
+            vec![0, 0, 0, 0, 0],
+            vec![0, 0, 0, 0, 0],
+            vec![0, 0, 0, 0, 0],
+            vec![0, 0, 0, 0, 0],
+            vec![0, 0, 0, 0, 0],
+        ];
+
+        assert_eq!(unflatten(flat, 5, 5).unwrap(), grid);
+    }
+
+    #[test]
+    fn unflatten_2() {
+        let flat = vec![
+            0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 3, 0, 7, 6, 0, 0, 2, 0, -2, 5, 0, 0, 5, 0, 0,
+        ];
+
+        let grid = vec![
+            vec![0, 0, 4, 0, 0],
+            vec![0, 1, 0, 0, 0],
+            vec![3, 0, 7, 6, 0],
+            vec![0, 2, 0, -2, 5],
+            vec![0, 0, 5, 0, 0],
+        ];
+
+        assert_eq!(unflatten(flat, 5, 5).unwrap(), grid);
+    }
+
+    #[test]
+    fn unflatten_3() {
+        let flat = vec![
+            0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 3, 0, 7, 6, 0, 0, 2, 0, -2, 5, 0, 0, 5, 0, 0,
+        ];
+
+        assert!(unflatten(flat, 5, 6).is_err());
+    }
+}
