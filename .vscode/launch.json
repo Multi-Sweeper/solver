@@ -8,9 +8,9 @@
             "type": "lldb",
             "request": "launch",
             "name": "Rust",
-            "program": "${cwd}/rust/target/debug/solver",
+            "program": "${cwd}/target/debug/solver",
             "args": [],
-            "cwd": "${workspaceFolder}/rust"
+            "cwd": "${workspaceFolder}"
         }
     ]
 }
