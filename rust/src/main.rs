@@ -34,13 +34,7 @@ impl Coloured for Cell {
     }
 }
 
-fn main() -> Result<(), String> {
-    // let board: GameBoard = GameBoard::new(9, 9, 10).unwrap();
-    let board: GameBoard = GameBoard::new(16, 16, 40).unwrap();
-    // let board: GameBoard = GameBoard::new(30, 16, 99).unwrap();
-    // let board: GameBoard = GameBoard::new(16, 16, 10).unwrap();
-
-    // determine all possible starting cells
+fn get_starting_cells(board: GameBoard) -> Result<Vec<(u8, u8)>, String> {
     let mut starting_cells: Vec<(usize, (u8, u8))> = Vec::new();
     let mut temp_board = board.clone();
     for cell in temp_board.solved_grid.get_iter() {
@@ -64,11 +58,24 @@ fn main() -> Result<(), String> {
     }
 
     starting_cells.sort_by(|a, b| b.0.cmp(&a.0));
-    let starting_cells_sorted: Vec<(u8, u8)> = starting_cells.iter().map(|x| x.1).collect();
+
+    let sorted_starting_cells = starting_cells.iter().map(|x| x.1).collect();
+
+    Ok(sorted_starting_cells)
+}
+
+fn main() -> Result<(), String> {
+    // let board: GameBoard = GameBoard::new(9, 9, 10).unwrap();
+    let board: GameBoard = GameBoard::new(16, 16, 40).unwrap();
+    // let board: GameBoard = GameBoard::new(30, 16, 99).unwrap();
+    // let board: GameBoard = GameBoard::new(16, 16, 10).unwrap();
+
+    // determine all possible starting cells
+    let starting_cells = get_starting_cells(board.clone())?;
 
     let start_solve_time = Instant::now();
     let mut step_summary: Option<Vec<Vec<&str>>> = None;
-    for starting_cell in &starting_cells_sorted[0..1] {
+    for starting_cell in &starting_cells[0..1] {
         step_summary = strategy_simple(board.clone(), starting_cell.to_owned())?;
     }
 
