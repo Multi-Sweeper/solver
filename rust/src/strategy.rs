@@ -2,7 +2,7 @@ use std::time::Instant;
 
 use crate::board::GameBoard;
 
-pub fn strategy_simple(
+pub fn strategy_simple_permute(
     board: GameBoard,
     starting_cell: (u8, u8),
 ) -> Result<Option<Vec<Vec<&'static str>>>, String> {
