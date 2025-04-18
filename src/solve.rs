@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::{Cell, board::GameBoard};
 
 fn calc_result_patterns(
@@ -39,6 +41,7 @@ impl GameBoard {
     fn is_valid_bomb_pattern(
         &self,
         potential_bombs: &Vec<(u8, u8)>,
+        relevant_number_cells: &HashSet<(u8, u8)>,
         pattern: u128,
     ) -> Result<bool, String> {
         let mut board = self.clone();
@@ -60,22 +63,19 @@ impl GameBoard {
             i += 1;
         }
 
-        // TODO: instead of iterating over all cells in the grid, i only need to check all number cells
-        // around a potential bomb
-        for cell in board.grid.get_iter() {
-            let (x, y) = cell.pos;
-            if let Cell::Number(_) = cell.val {
-                let flag_adj_val = board.flag_adj_grid.get_cell(x.into(), y.into());
-                if flag_adj_val != Some(Some(0)) {
-                    return Ok(false);
-                }
+        for (x, y) in relevant_number_cells {
+            let flag_adj_val = board
+                .flag_adj_grid
+                .get_cell(x.to_owned().into(), y.to_owned().into());
+            if flag_adj_val != Some(Some(0)) {
+                return Ok(false);
             }
         }
 
         Ok(true)
     }
 
-    fn potential_bombs(&self) -> Result<Vec<(u8, u8)>, String> {
+    fn get_potential_bombs(&self) -> Result<Vec<(u8, u8)>, String> {
         let mut out: Vec<(u8, u8)> = Vec::new();
         for cell in self.grid.get_iter() {
             let (x, y) = cell.pos;
@@ -91,12 +91,29 @@ impl GameBoard {
         Ok(out)
     }
 
+    fn get_relavent_number_cells(
+        &self,
+        potential_bombs: &Vec<(u8, u8)>,
+    ) -> Result<HashSet<(u8, u8)>, String> {
+        let mut relavent_number_cells: HashSet<(u8, u8)> = HashSet::new();
+
+        for (x, y) in potential_bombs {
+            let adj_numbers = self.grid.adj_number(x.to_owned(), y.to_owned())?;
+            for cell in adj_numbers {
+                relavent_number_cells.insert(cell);
+            }
+        }
+
+        Ok(relavent_number_cells)
+    }
+
     pub fn permute_solve_step(&mut self) -> Result<bool, String> {
         // TODO: i can get rid of this clone by simply having a flag on Grid to
         // represent that something has changed/progress has been made
         let pre_board = self.grid.clone();
 
-        let potential_bombs = self.potential_bombs()?;
+        let potential_bombs = self.get_potential_bombs()?;
+        let relevant_number_cells = self.get_relavent_number_cells(&potential_bombs)?;
 
         if potential_bombs.len() > 127 {
             return Err("too many potential bombs".to_string());
@@ -115,7 +132,7 @@ impl GameBoard {
         }
 
         for pattern in 1..end_pattern {
-            if self.is_valid_bomb_pattern(&potential_bombs, pattern)? {
+            if self.is_valid_bomb_pattern(&potential_bombs, &relevant_number_cells, pattern)? {
                 valid_patterns.push(pattern);
             }
         }
