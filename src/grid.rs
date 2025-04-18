@@ -8,6 +8,7 @@ pub struct Grid<T: Clone + Coloured + Hash + PartialEq + Eq> {
     cells: Vec<Vec<T>>,
     pub width: u8,
     pub height: u8,
+    pub progress: bool,
 }
 
 impl<T: Clone + Coloured + Hash + PartialEq + Eq> Grid<T> {
@@ -16,6 +17,7 @@ impl<T: Clone + Coloured + Hash + PartialEq + Eq> Grid<T> {
             cells: vec![vec![fill_cell; width as usize]; height as usize],
             width,
             height,
+            progress: false,
         }
     }
 
@@ -33,6 +35,7 @@ impl<T: Clone + Coloured + Hash + PartialEq + Eq> Grid<T> {
             cells,
             width,
             height,
+            progress: false,
         })
     }
 
@@ -44,6 +47,10 @@ impl<T: Clone + Coloured + Hash + PartialEq + Eq> Grid<T> {
         } else {
             Ok(())
         }
+    }
+
+    pub fn reset_progress(&mut self) {
+        self.progress = false;
     }
 
     pub fn get_cell(&self, x: i16, y: i16) -> Option<T> {
@@ -64,6 +71,12 @@ impl<T: Clone + Coloured + Hash + PartialEq + Eq> Grid<T> {
 
     pub fn set_cell(&mut self, x: i16, y: i16, cell_value: T) -> Result<(), String> {
         self.assert_bounds(x, y)?;
+
+        let cell = self.get_cell(x, y).unwrap();
+
+        if cell != cell_value {
+            self.progress = true;
+        }
 
         self.cells[(self.height - (y as u8) - 1) as usize][x as usize] = cell_value;
 

@@ -108,10 +108,6 @@ impl GameBoard {
     }
 
     pub fn permute_solve_step(&mut self) -> Result<bool, String> {
-        // TODO: i can get rid of this clone by simply having a flag on Grid to
-        // represent that something has changed/progress has been made
-        let pre_board = self.grid.clone();
-
         let potential_bombs = self.get_potential_bombs()?;
         let relevant_number_cells = self.get_relavent_number_cells(&potential_bombs)?;
 
@@ -142,8 +138,6 @@ impl GameBoard {
             return Ok(false);
         }
 
-        println!("valid_patterns: {:?}", valid_patterns);
-
         let (flag_pattern, safe_pattern) =
             calc_result_patterns(&potential_bombs, &valid_patterns, end_pattern);
 
@@ -159,7 +153,10 @@ impl GameBoard {
             }
         }
 
-        Ok(pre_board != self.grid)
+        let progress = self.grid.progress.clone();
+        self.grid.reset_progress();
+
+        Ok(progress)
     }
 }
 
