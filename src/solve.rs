@@ -28,6 +28,65 @@ fn calc_result_patterns(
     (flag_pattern, safe_pattern)
 }
 
+fn back_track_rec(
+    mut board: GameBoard,
+    potential_bombs: &Vec<(u8, u8)>,
+    valid_patterns: &mut Vec<u128>,
+    current_depth: u128,
+    max_depth: u128,
+    pattern: u128,
+) {
+    if pattern & 0b1 == 1 {
+        let (x, y) = potential_bombs
+            .get(current_depth as usize - 1)
+            .unwrap()
+            .to_owned();
+        let flag_res = board.place_flag(x, y);
+        if let Err(_) = flag_res {
+            return;
+        }
+    }
+
+    if current_depth == max_depth {
+        let relevant_number_cells = board.get_relavent_number_cells(&potential_bombs).unwrap();
+
+        for (x, y) in relevant_number_cells {
+            let flag_adj_val = board
+                .flag_adj_grid
+                .get_cell(x.to_owned().into(), y.to_owned().into());
+            if flag_adj_val != Some(Some(0)) {
+                return;
+            }
+        }
+
+        valid_patterns.push(pattern);
+        println!(
+            "valid pattern: {:0width$b}",
+            pattern,
+            width = max_depth as usize
+        );
+
+        return;
+    }
+
+    back_track_rec(
+        board.clone(),
+        potential_bombs,
+        valid_patterns,
+        current_depth + 1,
+        max_depth,
+        pattern << 1,
+    );
+    back_track_rec(
+        board.clone(),
+        potential_bombs,
+        valid_patterns,
+        current_depth + 1,
+        max_depth,
+        (pattern << 1) + 1,
+    );
+}
+
 impl GameBoard {
     pub fn simple_solve_step(&mut self) -> Result<bool, String> {
         let pre_board = self.grid.clone();
@@ -79,11 +138,9 @@ impl GameBoard {
         let mut out: Vec<(u8, u8)> = Vec::new();
         for cell in self.grid.get_iter() {
             let (x, y) = cell.pos;
-            if let Some(cell) = self.grid.get_cell(x.into(), y.into()) {
-                if cell == Cell::Unknown {
-                    if self.grid.adj_number(x.into(), y.into())?.len() > 0 {
-                        out.push((x, y));
-                    }
+            if cell.val == Cell::Unknown {
+                if self.grid.adj_number(x.into(), y.into())?.len() > 0 {
+                    out.push((x, y));
                 }
             }
         }
@@ -158,6 +215,58 @@ impl GameBoard {
 
         Ok(progress)
     }
+
+    pub fn back_track_solve_step(&mut self) -> Result<bool, String> {
+        let mut valid_patterns: Vec<u128> = Vec::new();
+        let potential_bombs = self.get_potential_bombs()?;
+        println!("potential_bombs_len: {}", potential_bombs.len());
+
+        // TODO: simple_solve_step should handle this
+        // if # of bombs left == # of unopened cells, click all cells
+        if potential_bombs.len() <= 0 {
+            return Err("potential_bombs.len() <= 0".to_string());
+        }
+
+        back_track_rec(
+            self.clone(),
+            &potential_bombs,
+            &mut valid_patterns,
+            1,
+            potential_bombs.len() as u128,
+            0b0,
+        );
+        back_track_rec(
+            self.clone(),
+            &potential_bombs,
+            &mut valid_patterns,
+            1,
+            potential_bombs.len() as u128,
+            0b1,
+        );
+
+        let end_pattern: u128 = 1u128 << potential_bombs.len();
+        let (flag_pattern, safe_pattern) =
+            calc_result_patterns(&potential_bombs, &valid_patterns, end_pattern);
+
+        let mut potential_bombs = potential_bombs.clone();
+        potential_bombs.reverse();
+        for i in 0..potential_bombs.len() {
+            let (x, y) = potential_bombs[i];
+
+            if ((flag_pattern >> i) & 0b1) == 1 {
+                self.place_flag(x, y)?;
+            }
+
+            if ((safe_pattern >> i) & 0b1) == 0 {
+                self.flood_fill(x.into(), y.into())?;
+            }
+        }
+
+        let progress = self.grid.progress.clone();
+        self.grid.reset_progress();
+
+        Ok(progress)
+    }
 }
 
 #[cfg(test)]
@@ -185,6 +294,25 @@ mod tests {
         0  0  0  0  1  1  1  0  0  0  0  1  1  1  1  B"
     }
 
+    fn get_solved_str_back_track() -> &'static str {
+        "0  1  B  2  B  2  B  B  1  0  0  1  B  B  1  0
+        0  1  1  2  1  3  3  3  1  0  0  1  2  2  1  0
+        0  0  0  0  1  2  B  1  0  0  0  0  0  0  0  0
+        0  0  1  2  3  B  2  1  0  0  0  0  0  1  1  1
+        0  0  1  B  B  2  2  1  2  1  1  1  1  2  B  1
+        0  0  1  2  2  1  2  B  3  B  1  1  B  2  1  1
+        0  0  0  0  0  0  2  B  3  1  1  1  1  2  1  1
+        0  0  0  0  0  0  1  1  1  0  0  0  1  2  B  1
+        0  0  1  1  1  0  0  0  0  0  0  0  2  B  3  1
+        0  1  3  B  2  0  1  1  1  0  0  1  3  B  3  1
+        1  2  B  B  2  0  1  B  2  1  2  2  B  3  B  1
+        B  2  3  3  2  0  1  1  3  B  3  B  2  3  2  2
+        1  1  2  B  2  0  0  1  4  B  4  1  1  1  B  1
+        2  2  3  B  2  0  0  1  B  B  2  0  1  2  2  1
+        B  B  3  2  2  1  0  1  3  4  3  1  1  B  1  0
+        3  B  2  1  B  1  0  0  1  B  B  1  1  1  1  0"
+    }
+
     fn get_pre_str() -> &'static str {
         "?  ?  ?  ?  ?  ?  ?  ?  ?  ?  ?  ?  ?  ?  ?  ? 
         2  2  1  1  3  F  3  F  F  F  3  2  2  ?  ?  ? 
@@ -202,6 +330,25 @@ mod tests {
         1  1  1  1  F  4  F  2  2  1  1  1  2  2  1  0 
         0  0  0  1  2  F  2  1  0  0  0  1  F  1  1  1 
         0  0  0  0  1  1  1  0  0  0  0  1  1  1  1  F"
+    }
+
+    fn get_pre_str_back_track() -> &'static str {
+        "0  1  F  2  F  2  F  F  1  0  0  1  F  F  1  0
+        0  1  1  2  1  3  3  3  1  0  0  1  2  2  1  0
+        0  0  0  0  1  2  F  1  0  0  0  0  0  0  0  0
+        0  0  1  2  3  F  2  1  0  0  0  0  0  1  1  1
+        0  0  1  F  F  2  2  1  2  1  1  1  1  2  F  1
+        0  0  1  2  2  1  2  F  3  F  1  1  F  2  1  1
+        0  0  0  0  0  0  2  F  3  1  1  1  1  2  1  1
+        0  0  0  0  0  0  1  1  1  0  0  0  1  2  F  1
+        0  0  1  1  1  0  0  0  0  0  0  0  2  F  3  1
+        0  1  3  F  2  0  1  1  1  0  0  1  3  F  3  1
+        1  2  F  F  2  0  1  F  2  1  2  2  F  3  F  1
+        F  2  3  3  2  0  1  1  3  F  3  F  2  3  2  2
+        1  1  2  F  2  0  0  1  4  F  4  1  1  1  F  1
+        2  2  3  F  2  0  0  1  F  F  2  0  1  2  2  1
+        F  F  3  2  2  1  0  1  3  4  3  1  1  F  1  0
+        ?  F  2  1  F  1  0  0  1  F  F  1  1  1  1  0"
     }
 
     fn get_post_str() -> &'static str {
@@ -226,6 +373,7 @@ mod tests {
     #[test]
     #[ignore]
     fn permute_1() {
+        // https://mrgris.com/projects/minesweepr/demo/analyzer/?w=16&h=16&mines=40&board=xxxxxxxxxxxxxxxx:22113!3!!!322xxx:!1..1123!311!222:11.111.22312111!:...1!322!2!1..11:...12!!21211111.:12111221.1111!21:!2!2221..1!1112!:1212!!1..111..11:...1221...111...:.......1111!211.:111.1122!2213!2.:1!112!3!3!1.2!2.:1111!4!22111221.:...12!21...1!111:....111....1111!
         // this takes ~70s for me in debug build
         // this takes ~7s for me in release build ?!?
         // AFTER FLAG ADJ GRID OPTIMIZATION:
@@ -265,5 +413,54 @@ mod tests {
         if pre_board.grid != post_board.grid {
             assert!(false, "solved board != expected solved board");
         }
+    }
+
+    #[test]
+    #[ignore]
+    fn back_track_1() {
+        time_test!();
+
+        let pre = get_pre_str();
+        let post = get_post_str();
+        let solved = get_solved_str();
+
+        let mut pre_board = GameBoard::from_str(solved, pre).unwrap();
+        let post_board = GameBoard::from_str(solved, post).unwrap();
+
+        let pre_solve = pre_board.clone();
+
+        pre_board.back_track_solve_step().unwrap();
+
+        // println!("{}\n{}", pre_board);let diff = pre_board.grid.diff(&post_board.grid).unwrap();
+        let diff = pre_board.grid.diff(&post_board.grid).unwrap();
+        let mut diff_map = HashMap::new();
+        for pos in diff {
+            diff_map.insert(pos, (100, 100, 0));
+        }
+
+        println!(
+            "\nsolved:\n{}\npre solved:\n{}\npost solved:\n{}\nexpected:\n{}",
+            pre_board.solved_grid,
+            pre_solve.grid,
+            pre_board.grid,
+            post_board.grid.to_string(Some(diff_map))
+        );
+
+        if pre_board.grid != post_board.grid {
+            assert!(false, "solved board != expected solved board");
+        }
+    }
+
+    #[test]
+    #[ignore]
+    fn back_track_2() {
+        time_test!();
+
+        let pre = get_pre_str_back_track();
+        let solved = get_solved_str_back_track();
+
+        let mut pre_board = GameBoard::from_str(solved, pre).unwrap();
+
+        pre_board.back_track_solve_step().unwrap();
     }
 }

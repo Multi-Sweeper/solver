@@ -51,3 +51,49 @@ pub fn strategy_simple_permute(
         Ok(None)
     }
 }
+
+pub fn strategy_simple_back_track(
+    board: GameBoard,
+    starting_cell: (u8, u8),
+) -> Result<Option<Vec<Vec<&'static str>>>, String> {
+    let mut step_summary: Vec<Vec<&str>> = Vec::new();
+
+    let mut game_board = board.clone();
+    println!("starting: {:?}", starting_cell);
+    game_board.flood_fill(starting_cell.0.into(), starting_cell.1.into())?;
+
+    println!("= init =======================================");
+    println!("{}", game_board);
+
+    step_summary.clear();
+    let mut i = 0;
+    let mut solved = false;
+    let mut progress = true;
+
+    while !solved && progress {
+        println!("= {} =======================================", i + 1);
+        let start_time = Instant::now();
+        step_summary.push(vec!["basic"]);
+        progress = game_board.simple_solve_step()?;
+        if !progress {
+            step_summary.last_mut().unwrap().push("back_track");
+            progress = game_board.back_track_solve_step()?;
+        }
+
+        println!("{}", game_board);
+        println!(
+            "progress: {} |  time taken: {}ms",
+            progress,
+            start_time.elapsed().as_millis()
+        );
+
+        solved = game_board.is_solved()?;
+        i += 1;
+    }
+
+    if solved {
+        Ok(Some(step_summary))
+    } else {
+        Ok(None)
+    }
+}
