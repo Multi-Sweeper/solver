@@ -9,6 +9,7 @@ use strategy::{strategy_simple_back_track, strategy_simple_permute};
 mod board;
 mod colour;
 mod grid;
+mod set;
 mod solve;
 mod strategy;
 mod utils;
@@ -65,6 +66,7 @@ fn get_starting_cells(board: GameBoard) -> Result<Vec<(u8, u8)>, String> {
 }
 
 fn main() -> Result<(), String> {
+    /*
     // let board: GameBoard = GameBoard::new(9, 9, 10).unwrap();
     let board: GameBoard = GameBoard::new(16, 16, 40).unwrap();
     // let board: GameBoard = GameBoard::new(30, 16, 99).unwrap();
@@ -85,6 +87,9 @@ fn main() -> Result<(), String> {
     } else {
         println!("could not solve");
     }
+    */
+
+    println!("{}", set::utils::product(1..1));
 
     Ok(())
 }
